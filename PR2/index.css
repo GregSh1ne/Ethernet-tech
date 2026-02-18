@@ -1,0 +1,185 @@
+:root {
+    --main-bg: white;
+    --main-text: aliceblue;
+    --accent: darkgreen;
+}
+body 
+{
+    background-color: var(--main-bg);
+    color: var(--main-text);
+    font-style:inherit;
+    font-size: 24px;
+}
+header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+}
+.div
+{
+    background-color: white;
+    color:black;
+    font-size: 18px;
+    font-style: italic;
+}
+.form-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: calc(100% - 200px);
+}
+#p-white{
+    color:white;
+}
+#p-blue{
+    color: blue;
+}
+#p-red{
+    color: red;
+}
+div p b, i
+{
+color:green;
+}
+.span_txt
+{
+    font-style: oblique;
+    font-size: 12px;
+    display:flex;
+}
+img
+{
+    width: 300px;
+    height: 100px;
+    float:center;
+}
+iframe {
+    position: relative;
+    top: 20px;
+    border: 3px solid black;
+}
+table
+{
+font-size: 30px;
+color:black;
+font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+border-color:black;
+display: table;
+width: calc(150% / 4);
+}
+tr:hover{
+    background-color:darkolivegreen;
+}
+footer
+{
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    float: end;
+}
+h1
+{
+color:darkgreen;
+font-size: 30px;
+font-family: Georgia, 'Times New Roman', Times, serif;
+}
+h1:hover
+{
+font-size: calc(30px * 1.2);
+}
+h2
+{
+color:darkgreen;
+font-size: 25px;
+font-family: Georgia, 'Times New Roman', Times, serif;
+}
+h2:hover
+{
+    font-size: calc(25px * 1.2);
+}
+h3
+{
+color:darkgreen;
+font-size: 20px;
+font-family: Georgia, 'Times New Roman', Times, serif;
+}
+h3:hover
+{
+    font-size: calc(20px * 1.2);
+}
+h4
+{
+color:darkgreen;
+font-size: 15px;
+font-family: Georgia, 'Times New Roman', Times, serif;
+}
+h4:hover
+{
+    font-size: calc(15px * 1.2);
+}
+.input_txt
+{
+width: 600px;
+height: 300px;
+}
+button{
+    transition: transform 1s;
+}
+button:hover{
+    transform:scale(150%)
+}
+select{
+    transition: all;
+    font-size: 25px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    width: 400px;
+    height: auto;
+}
+@keyframes bigger-picture {
+    from {
+        width: 100px;
+        height: 200px;
+    }
+    50% {
+        width: 1600px;
+        height: 1600px;
+    }
+    to {
+        width: 2000px;
+        height: 2000px;
+    }
+}
+.picture1{
+    animation-name: bigger-picture;
+    animation-duration: 30s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+.picture1:hover
+{
+animation: none;
+}
+@media (orientation: portrait) {
+    picture{
+        color: blue;
+    }
+}
+@font-face {
+    font-family: 'Dwarven';
+    src: url('DwarvenStonecraftCyrExtended.otf');
+}
+.ul_class{
+    float: center;
+    font-family: Dwarven;
+    font-size: 30px;
+    display: grid;
+}
+.ul_class::before{
+    content: "Пример списка покупок";
+    color:darkslategray;
+}
+.ul_class::after{
+    content: "*Пример списка покупок*";
+    color:seagreen;
+}
