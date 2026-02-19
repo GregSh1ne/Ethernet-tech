@@ -1,14 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
     <head>
         <link rel="stylesheet" href="style.css">
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Canvas PR4</title>
     </head>
     <body>
-        
-    </body>
-    <footer>
+    <div class="container">
+        <div class="canvas-wrapper" id="wrapper-circle">
+            <h3>Круг (Клик для смены цвета)</h3>
+            <canvas id="canvas-circle" width="350" height="300"></canvas>
+        </div>
 
-    </footer>    
+        <div class="canvas-wrapper" id="wrapper-square">
+            <h3>Квадрат (Клик для постройки/разборки)</h3>
+            <canvas id="canvas-square" width="350" height="300"></canvas>
+        </div>
+
+        <div class="canvas-wrapper" id="wrapper-ellipse">
+            <h3>Эллипс (Клик для смены цвета)</h3>
+            <canvas id="canvas-ellipse" width="350" height="300"></canvas>
+        </div>
+
+        <div class="canvas-wrapper" id="wrapper-bezier">
+            <h3>Кривая Безье (Клик для зеркального изгиба)</h3>
+            <canvas id="canvas-bezier" width="350" height="300"></canvas>
+        </div>
+    </div>
+
+        <script src="js/data.js"></script>
+        <script src="js/shapes.js"></script>
+        <script src="js/main.js" defer></script>
+
+    </body>
+    <footer></footer>    
 </html>
