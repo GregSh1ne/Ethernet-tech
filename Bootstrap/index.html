@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Базовая практика Bootstrap + CSS</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header fixed-top">
+    <div class="container-fluid d-flex justify-content-between align-items-center p-3">
+      <h4 class="m-0">Практика</h4>
+      <button class="btn-login">Войти</button>
+    </div>
+  </header>
+
+  <main class="container mt-5 pt-5">
+
+    <div class="row align-items-center mb-4 p-4 hero-section">
+      
+      <div class="col-12 col-md-6 text-center text-md-start mb-3 mb-md-0">
+        <h2>Привет, мир!</h2>
+        <p class="pt-1">Я нахожу под "Привет, мир!"</p>
+      </div>
+
+      <div class="col-12 col-md-6 align-self-center text-center">
+        <div class="inner-block p-3 m-0">
+          Эта колонка выровнена по центру
+        </div>
+      </div>
+
+    </div>
+
+    <h3 class="mb-4 text-center">Сетка карточек</h3>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+      
+      <div class="col">
+        <div class="custom-card p-4 position-relative h-100">
+          <span class="custom-badge position-absolute top-0 end-0 m-2">Важно</span>
+          <p class="my-2">Здесь показано позиционирование.</p>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="custom-card h-100">
+          <div class="d-flex justify-content-center align-items-center p-4 h-100">
+            <p class="text-center m-0">Текст по центру (Flex).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="custom-card px-4 py-5 mt-2 h-100">
+          <p class="mb-0">Карточка с демонстрацией отступов.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <button class="btn-up position-fixed bottom-0 end-0 m-4">Вверх ↑</button>
+
+</body>
+</html>

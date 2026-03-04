@@ -1,0 +1,58 @@
+/* Шапка сайта */
+.site-header {
+  background-color: #0d6efd; /* Синий цвет */
+  color: white;
+}
+
+/* Кнопка "Войти" */
+.btn-login {
+  background-color: white;
+  color: #0d6efd;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Серый блок приветствия */
+.hero-section {
+  background-color: #f8f9fa; /* Светло-серый фон */
+  border: 1px solid #dee2e6; /* Тонкая серая рамка */
+  border-radius: 8px;
+}
+
+/* Внутренний белый блок */
+.inner-block {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+/* Стили для карточек */
+.custom-card {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-sizing: border-box; /* Чтобы padding не ломал ширину */
+}
+
+/* Красный бейдж "Важно" */
+.custom-badge {
+  background-color: #dc3545; /* Красный цвет */
+  color: white;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Кнопка "Вверх" */
+.btn-up {
+  background-color: #212529; /* Темный цвет */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1000; /* Чтобы кнопка всегда была поверх другого текста */
+}
