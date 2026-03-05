@@ -1,0 +1,10 @@
+{
+  "pages": {
+    "home": { "title": "Главная", "content": "Добро пожаловать на наш сайт!" },
+    "about": { "title": "О нас", "content": "Мы изучаем Node.js и Express." },
+    "services": { "title": "Услуги", "content": "Разработка быстрых серверов." },
+    "contacts": { "title": "Контакты", "content": "Свяжитесь с нами по email." },
+    "feedback": { "title": "Обратная связь", "content": "Заполните форму ниже." },
+    "dostup": { "title": "Доступ", "content": "У нас есть 24/7 поддержка." }
+  }
+}

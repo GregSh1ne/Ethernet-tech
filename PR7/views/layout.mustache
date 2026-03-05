@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{title}}</title>
+    <style>
+        nav a { margin-right: 15px; }
+        .form-group { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Главная</a> <a href="/about">О нас</a> 
+        <a href="/services">Услуги</a> <a href="/contacts">Контакты</a> 
+        <a href="/feedback">Форма</a>
+        <a href="/dostup">Доступ</a>
+    </nav>
+    <hr>
+    <h1>{{title}}</h1>
+    <p>{{content}}</p>
+
+    {{#isFeedback}}
+    <form action="/submit" method="POST">
+        <div class="form-group">
+            Имя: <input type="text" name="username" required>
+        </div>
+        <div class="form-group">
+            Курс: 
+            <select name="course">
+                <option value="Node.js">Node.js</option>
+                <option value="C++">C++</option>
+                <option value="Web-dev">Web-dev</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <input type="checkbox" name="subscribe" value="Да"> Подписаться на новости
+        </div>
+        <button type="submit">Отправить</button>
+    </form>
+    {{/isFeedback}}
+
+    {{#formData}}
+    <h3>Полученные данные:</h3>
+    <ul>
+        {{#items}}
+        <li><strong>{{key}}:</strong> {{value}}</li>
+        {{/items}}
+    </ul>
+    {{/formData}}
+</body>
+</html>
