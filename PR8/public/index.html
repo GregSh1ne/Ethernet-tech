@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Совместный редактор</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Совместный текстовый редактор</h1>
+            <div class="user-info">
+                <span>Вы: </span>
+                <span id="currentUser" class="user-badge"></span>
+            </div>
+        </header>
+
+        <div class="users-panel">
+            <h3>👥 Онлайн: <span id="usersCount">0</span></h3>
+            <div id="usersList" class="users-list"></div>
+        </div>
+
+        <div class="toolbar">
+            <button id="toggleHighlight" class="btn btn-active">
+                🎨 Подсветка: <span class="btn-status">ВКЛ</span>
+            </button>
+        </div>
+
+        <div class="editor-wrapper">
+            <div id="editor" class="editor-content" contenteditable="true" placeholder="Начните печатать..."></div>
+        </div>
+
+        <div class="status-bar">
+            <span id="lastUpdate">Ожидание изменений...</span>
+            <span id="connectionStatus" class="status-connected">● Подключено</span>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>

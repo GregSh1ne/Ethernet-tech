@@ -17,27 +17,23 @@ const server = http.createServer((req, res) => {
 
   console.log(`Запрос: ${req.url}`);
 
-  // === 1. Текст ===
   if (pathname === '/text') {
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Это обычный текст');
   }
 
-  // === 2. JSON ===
   else if (pathname === '/json') {
     res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
     res.end(JSON.stringify({ status: 'ok', message: 'Данные в JSON' }));
   }
 
-  // === 3. Файлы (HTML, JPEG и др.) ===
   else if (pathname === '/' || pathname === '/index.html') {
     serveFile(res, 'index.html', 'text/html');
   }
-  else if (pathname === '/logo.svg') {
-    serveFile(res, 'logo.svg', 'image/svg+xml');
+  else if (pathname === '/logo.png') {
+    serveFile(res, 'logo.png', 'image/png');
   }
 
-  // === 4. Авторизация через GET-запрос ===
   else if (pathname === '/login') {
     const { username, password } = parsedUrl.query;
     
@@ -50,7 +46,6 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // === 5. Страница с формой входа ===
   else if (pathname === '/login-page') {
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
     res.end(`
@@ -67,14 +62,12 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // === 404 ===
   else {
     res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Страница не найдена');
   }
 });
 
-// Вспомогательная функция для отправки файлов
 function serveFile(res, filename, contentType) {
   const filePath = path.join(__dirname, filename);
   fs.readFile(filePath, (err, data) => {
@@ -94,7 +87,7 @@ server.listen(3000, () => {
   console.log('/text       → обычный текст');
   console.log('/json       → JSON-ответ');
   console.log('/           → index.html');
-  console.log('/logo.svg  → картинка');
+  console.log('/logo.svg   → картинка');
   console.log('/login-page → форма входа');
   console.log('/login?username=...&password=... → проверка авторизации');
 });
