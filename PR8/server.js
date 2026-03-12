@@ -49,9 +49,7 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('userJoined', user);
     
     socket.on('textChange', (data) => {
-        console.log('Изменения от:', user.name, 'Символов:', data.contentData ? data.contentData.length : 0);
-        
-        if (data.contentData && data.contentData.length > 0) {
+        if (data.contentData && data.contentData.length >= 0) { // Изменено с > 0 на >= 0 для очистки
             documentContent = data.contentData;
             
             socket.broadcast.emit('textChange', {

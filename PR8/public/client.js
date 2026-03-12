@@ -12,13 +12,12 @@ let highlightMode = true;
 let usersMap = new Map();
 let isComposing = false;
 let lastText = '';
+let localContentData = []; // Наш единый источник правды (State)
 
-// 1. ПРИНУДИТЕЛЬНЫЙ ПЕРЕНОС СТРОКИ
-// Перехватываем нажатие Enter, чтобы вставлять <br> вместо создания <div>
+// ПРИНУДИТЕЛЬНЫЙ ПЕРЕНОС СТРОКИ
 editor.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
-        // Вставляем перенос строки (<br>)
         document.execCommand('insertLineBreak');
     }
 });
@@ -33,13 +32,13 @@ socket.on('init', function(data) {
         usersMap.set(user.id, user);
     });
 
-    if (data.contentData && data.contentData.length > 0) {
-        renderContent(data.contentData);
+    localContentData = data.contentData || [];
+    if (localContentData.length > 0) {
+        renderContent(localContentData);
     }
 
-    lastText = getPlainText();
+    lastText = getTextFromData(localContentData);
     updateUsersList(data.users);
-    console.log('Подключен:', currentUser.name, 'Цвет:', currentUser.color);
 });
 
 toggleHighlightBtn.addEventListener('click', function() {
@@ -51,8 +50,10 @@ toggleHighlightBtn.addEventListener('click', function() {
         toggleHighlightBtn.classList.remove('btn-active');
         toggleHighlightBtn.querySelector('.btn-status').textContent = 'ВЫКЛ';
     }
-    var contentData = extractContentData();
-    renderContent(contentData);
+    // Просто перерисовываем DOM из памяти
+    let cursorPos = saveCursor();
+    renderContent(localContentData);
+    restoreCursor(cursorPos);
 });
 
 editor.addEventListener('input', function() {
@@ -69,71 +70,68 @@ editor.addEventListener('compositionend', function() {
     handleInput();
 });
 
-function handleInput() {
-    var contentData = extractContentData();
-    var text = getPlainText();
-    
-    // Отправляем только если текст реально изменился
-    if (text !== lastText) {
-        socket.emit('textChange', {
-            content: text,
-            contentData: contentData
-        });
-        lastText = text;
-        updateLastActivity('Вы печатаете...');
-    }
+// ХЕЛПЕРЫ ДЛЯ РАБОТЫ С ТЕКСТОМ И СОСТОЯНИЕМ
+function getTextFromData(dataArray) {
+    return dataArray.map(item => item.char).join('');
 }
 
-function getPlainText() {
-    return editor.innerText || '';
-}
-
-function extractContentData() {
-    var data = [];
-    var timestamp = Date.now();
-    
-    function process(node) {
-        if (node.nodeType === 3) { // Текстовый узел
-            var text = node.textContent;
-            for (var i = 0; i < text.length; i++) {
-                data.push({ 
-                    char: text[i], 
-                    userId: currentUser.id, 
-                    timestamp: timestamp 
-                });
+function getCleanText(el) {
+    let text = '';
+    for (let i = 0; i < el.childNodes.length; i++) {
+        let node = el.childNodes[i];
+        if (node.nodeType === 3) { 
+            text += node.textContent;
+        } else if (node.nodeName === 'BR') {
+            text += '\n';
+        } else if (node.nodeType === 1) {
+            if (['DIV', 'P'].includes(node.nodeName) && text.length > 0 && text[text.length-1] !== '\n') {
+                 text += '\n';
             }
-        } else if (node.nodeType === 1) { // Элемент
-            var userId = node.dataset.userId || currentUser.id;
-            var ts = parseInt(node.dataset.timestamp) || timestamp;
-            
-            for (var i = 0; i < node.childNodes.length; i++) {
-                var child = node.childNodes[i];
-                
-                if (child.nodeName === 'BR') {
-                    data.push({ 
-                        char: '\n', 
-                        userId: userId, 
-                        timestamp: ts 
-                    });
-                } else if (['DIV', 'P'].includes(child.nodeName)) {
-                    // Если браузер все же создал блок (DIV/P), считаем это переносом строки
-                    // Добавляем \n перед содержимым блока, если это не самый начало
-                    if (data.length > 0 && data[data.length - 1].char !== '\n') {
-                         data.push({ char: '\n', userId: userId, timestamp: ts });
-                    }
-                    process(child);
-                } else {
-                    process(child);
-                }
-            }
+            text += getCleanText(node);
         }
     }
+    return text;
+}
 
-    for (var i = 0; i < editor.childNodes.length; i++) {
-        process(editor.childNodes[i]);
+// ОСНОВНАЯ ЛОГИКА ВВОДА (ПОИСК РАЗНИЦЫ)
+function handleInput() {
+    let newText = getCleanText(editor);
+    if (newText === lastText) return;
+
+    // Вычисляем, что изменилось (diff)
+    let i = 0;
+    while (i < lastText.length && i < newText.length && lastText[i] === newText[i]) i++;
+
+    let j = 0;
+    while (i + j < lastText.length && i + j < newText.length && 
+           lastText[lastText.length - 1 - j] === newText[newText.length - 1 - j]) j++;
+
+    let removedCount = lastText.length - i - j;
+    let addedStr = newText.substring(i, newText.length - j);
+
+    // Обновляем массив состояния
+    localContentData.splice(i, removedCount);
+
+    let newItems = [];
+    let ts = Date.now();
+    for (let k = 0; k < addedStr.length; k++) {
+        newItems.push({ char: addedStr[k], userId: currentUser.id, timestamp: ts });
     }
+    
+    localContentData.splice(i, 0, ...newItems);
+    lastText = newText;
 
-    return data;
+    socket.emit('textChange', {
+        content: newText,
+        contentData: localContentData
+    });
+
+    updateLastActivity('Вы печатаете...');
+
+    // Перерисовываем DOM для применения стилей к новым буквам
+    let cursorPos = saveCursor();
+    renderContent(localContentData);
+    restoreCursor(cursorPos);
 }
 
 function renderContent(contentData) {
@@ -154,19 +152,17 @@ function renderContent(contentData) {
                 var user = usersMap.get(currentUserId);
                 var color = user ? user.color : '#999';
                 var bg = highlightMode ? 'background-color: ' + color + '40' : '';
-                html += '<span class="char" data-user-id="' + currentUserId + '" style="' + bg + '">' + escapeHtml(buffer) + '</span><br>';
+                html += `<span class="char" data-user-id="${currentUserId}" style="${bg}">${escapeHtml(buffer)}</span>`;
                 buffer = '';
-            } else {
-                html += '<br>';
             }
+            html += '<br>';
             currentUserId = null;
         } else {
-            // 2. ИСПРАВЛЕНИЕ СИНТАКСИСА (& & -> &&) И ОПЕЧАТКИ (colo r -> color)
             if (currentUserId !== item.userId && buffer) {
                 var user = usersMap.get(currentUserId);
                 var color = user ? user.color : '#999';
                 var bg = highlightMode ? 'background-color: ' + color + '40' : '';
-                html += '<span class="char" data-user-id="' + currentUserId + '" style="' + bg + '">' + escapeHtml(buffer) + '</span>';
+                html += `<span class="char" data-user-id="${currentUserId}" style="${bg}">${escapeHtml(buffer)}</span>`;
                 buffer = '';
             }
             currentUserId = item.userId;
@@ -178,18 +174,13 @@ function renderContent(contentData) {
         var user = usersMap.get(currentUserId);
         var color = user ? user.color : '#999';
         var bg = highlightMode ? 'background-color: ' + color + '40' : '';
-        html += '<span class="char" data-user-id="' + currentUserId + '" style="' + bg + '">' + escapeHtml(buffer) + '</span>';
+        html += `<span class="char" data-user-id="${currentUserId}" style="${bg}">${escapeHtml(buffer)}</span>`;
     }
 
-    // Сохраняем позицию курсора перед перерисовкой
-    var cursorPos = saveCursor();
     editor.innerHTML = html;
-    // Пытаемся восстановить курсор
-    restoreCursor(cursorPos);
 }
 
 socket.on('textChange', function(data) {
-    // Если изменение от другого пользователя
     if (data.userId !== currentUser.id) {
         if (data.userName && data.userColor && !usersMap.has(data.userId)) {
             usersMap.set(data.userId, {
@@ -203,24 +194,14 @@ socket.on('textChange', function(data) {
         var cursorPos = saveCursor();
 
         if (data.contentData && data.contentData.length > 0) {
-            renderContent(data.contentData);
-        } else if (data.content) {
-            var contentData = [];
-            for (var i = 0; i < data.content.length; i++) {
-                contentData.push({
-                    char: data.content[i],
-                    userId: data.userId,
-                    timestamp: data.timestamp || Date.now()
-                });
-            }
-            renderContent(contentData);
+            localContentData = data.contentData; // Обновляем состояние
+            renderContent(localContentData);
         }
 
         restoreCursor(cursorPos);
-        lastText = getPlainText();
+        lastText = getTextFromData(localContentData);
         updateLastActivity('Изменения от ' + (data.userName || 'пользователя'));
 
-        // Визуальный эффект обновления
         editor.style.backgroundColor = 'rgba(102,126,234,0.05)';
         setTimeout(function() {
             editor.style.backgroundColor = '';
@@ -232,10 +213,42 @@ function saveCursor() {
     var sel = window.getSelection();
     if (!sel.rangeCount) return 0;
     var range = sel.getRangeAt(0);
-    var preRange = range.cloneRange();
-    preRange.selectNodeContents(editor);
-    preRange.setEnd(range.startContainer, range.startOffset);
-    return preRange.toString().length;
+
+    var length = 0;
+    var found = false;
+
+    function traverse(node) {
+        if (found) return;
+        // Если дошли до узла, где стоит курсор
+        if (node === range.startContainer) {
+            if (node.nodeType === 3) { // Текстовый узел
+                length += range.startOffset;
+            } else { // Если курсор стоит внутри элемента (например, div)
+                for (var i = 0; i < range.startOffset; i++) {
+                    var child = node.childNodes[i];
+                    if (child.nodeType === 3) length += child.length;
+                    else if (child.nodeName === 'BR') length += 1;
+                    else length += child.textContent.length;
+                }
+            }
+            found = true;
+            return;
+        }
+        
+        // Считаем пройденные узлы
+        if (node.nodeType === 3) {
+            length += node.length;
+        } else if (node.nodeName === 'BR') {
+            length += 1; // Считаем Enter как 1 символ
+        } else {
+            for (var i = 0; i < node.childNodes.length; i++) {
+                traverse(node.childNodes[i]);
+            }
+        }
+    }
+
+    traverse(editor);
+    return length;
 }
 
 function restoreCursor(pos) {
@@ -243,13 +256,23 @@ function restoreCursor(pos) {
     var range = document.createRange();
     var current = 0;
     var found = false;
-    
+
     function traverse(node) {
         if (found) return;
+        
         if (node.nodeType === 3) {
             var next = current + node.length;
             if (pos >= current && pos <= next) {
                 range.setStart(node, pos - current);
+                range.collapse(true);
+                found = true;
+                return;
+            }
+            current = next;
+        } else if (node.nodeName === 'BR') {
+            var next = current + 1;
+            if (pos === next) {
+                range.setStartAfter(node);
                 range.collapse(true);
                 found = true;
                 return;
@@ -263,10 +286,14 @@ function restoreCursor(pos) {
     }
 
     traverse(editor);
-    if (found) {
-        sel.removeAllRanges();
-        sel.addRange(range);
+
+    if (!found) {
+        range.selectNodeContents(editor);
+        range.collapse(false);
     }
+
+    sel.removeAllRanges();
+    sel.addRange(range);
 }
 
 socket.on('userJoined', function(user) {
@@ -304,7 +331,7 @@ function addUserToPanel(user) {
     var chip = document.createElement('div');
     chip.className = 'user-chip';
     chip.id = 'user-' + user.id;
-    chip.innerHTML = '<div class="user-dot" style="background:' + user.color + '"></div>' + user.name + '';
+    chip.innerHTML = '<div class="user-dot" style="background:' + user.color + '"></div>' + user.name;
     usersListEl.appendChild(chip);
     usersCountEl.textContent = usersListEl.children.length;
 }
@@ -333,7 +360,7 @@ function escapeHtml(text) {
 }
 
 window.addEventListener('beforeunload', function(e) {
-    if (getPlainText() !== lastText) {
+    if (getPlainText() !== lastText) { // Фоллбэк, если что-то не ушло
         e.preventDefault();
         e.returnValue = '';
     }
