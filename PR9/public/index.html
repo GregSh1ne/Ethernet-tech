@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Доска объявлений</title>
+    <link href="style.css" rel = "stylesheet">
+</head>
+<body>
+
+    <h1>Доска объявлений</h1>
+
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+        <h3>Добавить объявление</h3>
+        <form id="addForm">
+            <div class="form-group">
+                <input type="text" id="title" placeholder="Заголовок" required>
+            </div>
+            <div class="form-group">
+                <textarea id="text" rows="3" placeholder="Текст объявления" required></textarea>
+            </div>
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Поиск по тексту...">
+        <button onclick="searchAds()">Найти</button>
+        <button onclick="loadAds()">Сбросить</button>
+    </div>
+
+    <div id="adsContainer"></div>
+
+    <script>
+        async function loadAds(searchQuery = '') {
+            const url = searchQuery ? `/api/ads?search=${encodeURIComponent(searchQuery)}` : '/api/ads';
+            const response = await fetch(url);
+            const ads = await response.json();
+            
+            const container = document.getElementById('adsContainer');
+            container.innerHTML = '';
+
+            if (ads.length === 0) {
+                container.innerHTML = '<p>Объявлений не найдено.</p>';
+                return;
+            }
+
+            ads.forEach(ad => {
+                const card = document.createElement('div');
+                card.className = 'ad-card';
+                card.innerHTML = `
+                    <h3>${ad.title}</h3>
+                    <p>${ad.text}</p>
+                    <small>${new Date(ad.createdAt).toLocaleString()}</small>
+                    <hr>
+                    <button class="delete-btn" onclick="deleteAd('${ad._id}')">Удалить</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const text = document.getElementById('text').value;
+
+            await fetch('/api/ads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, text })
+            });
+
+            document.getElementById('addForm').reset();
+            loadAds();
+        });
+
+        async function deleteAd(id) {
+            if(confirm('Точно удалить?')) {
+                await fetch(`/api/ads/${id}`, { method: 'DELETE' });
+                loadAds();
+            }
+        }
+
+        function searchAds() {
+            const query = document.getElementById('searchInput').value;
+            loadAds(query);
+        }
+
+        loadAds();
+    </script>
+</body>
+</html>

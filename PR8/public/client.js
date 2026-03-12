@@ -12,9 +12,8 @@ let highlightMode = true;
 let usersMap = new Map();
 let isComposing = false;
 let lastText = '';
-let localContentData = []; // Наш единый источник правды (State)
+let localContentData = [];
 
-// ПРИНУДИТЕЛЬНЫЙ ПЕРЕНОС СТРОКИ
 editor.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -50,7 +49,6 @@ toggleHighlightBtn.addEventListener('click', function() {
         toggleHighlightBtn.classList.remove('btn-active');
         toggleHighlightBtn.querySelector('.btn-status').textContent = 'ВЫКЛ';
     }
-    // Просто перерисовываем DOM из памяти
     let cursorPos = saveCursor();
     renderContent(localContentData);
     restoreCursor(cursorPos);
@@ -93,12 +91,10 @@ function getCleanText(el) {
     return text;
 }
 
-// ОСНОВНАЯ ЛОГИКА ВВОДА (ПОИСК РАЗНИЦЫ)
 function handleInput() {
     let newText = getCleanText(editor);
     if (newText === lastText) return;
 
-    // Вычисляем, что изменилось (diff)
     let i = 0;
     while (i < lastText.length && i < newText.length && lastText[i] === newText[i]) i++;
 
@@ -109,7 +105,6 @@ function handleInput() {
     let removedCount = lastText.length - i - j;
     let addedStr = newText.substring(i, newText.length - j);
 
-    // Обновляем массив состояния
     localContentData.splice(i, removedCount);
 
     let newItems = [];
@@ -128,7 +123,6 @@ function handleInput() {
 
     updateLastActivity('Вы печатаете...');
 
-    // Перерисовываем DOM для применения стилей к новым буквам
     let cursorPos = saveCursor();
     renderContent(localContentData);
     restoreCursor(cursorPos);
@@ -194,7 +188,7 @@ socket.on('textChange', function(data) {
         var cursorPos = saveCursor();
 
         if (data.contentData && data.contentData.length > 0) {
-            localContentData = data.contentData; // Обновляем состояние
+            localContentData = data.contentData;
             renderContent(localContentData);
         }
 
@@ -219,11 +213,10 @@ function saveCursor() {
 
     function traverse(node) {
         if (found) return;
-        // Если дошли до узла, где стоит курсор
         if (node === range.startContainer) {
-            if (node.nodeType === 3) { // Текстовый узел
+            if (node.nodeType === 3) {
                 length += range.startOffset;
-            } else { // Если курсор стоит внутри элемента (например, div)
+            } else {
                 for (var i = 0; i < range.startOffset; i++) {
                     var child = node.childNodes[i];
                     if (child.nodeType === 3) length += child.length;
@@ -235,11 +228,10 @@ function saveCursor() {
             return;
         }
         
-        // Считаем пройденные узлы
         if (node.nodeType === 3) {
             length += node.length;
         } else if (node.nodeName === 'BR') {
-            length += 1; // Считаем Enter как 1 символ
+            length += 1;
         } else {
             for (var i = 0; i < node.childNodes.length; i++) {
                 traverse(node.childNodes[i]);
@@ -360,7 +352,7 @@ function escapeHtml(text) {
 }
 
 window.addEventListener('beforeunload', function(e) {
-    if (getPlainText() !== lastText) { // Фоллбэк, если что-то не ушло
+    if (getPlainText() !== lastText) {
         e.preventDefault();
         e.returnValue = '';
     }

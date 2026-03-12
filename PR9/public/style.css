@@ -1,0 +1,42 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px; 
+    margin: 0 auto; 
+    padding: 20px; 
+}
+.ad-card {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px; 
+    border-radius: 5px; 
+}
+.ad-card h3 
+{ 
+    margin-top: 0; 
+}
+.delete-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px; 
+}
+.form-group { 
+    margin-bottom: 10px; 
+}
+input, textarea { 
+    width: 100%;
+    padding: 8px; 
+    margin-top: 5px; 
+    box-sizing: border-box; 
+}
+button { 
+    padding: 10px 15px; 
+    cursor: pointer; 
+}
+.search-bar { 
+    margin-bottom: 20px;
+    display: flex; 
+    gap: 10px; 
+}

@@ -49,7 +49,7 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('userJoined', user);
     
     socket.on('textChange', (data) => {
-        if (data.contentData && data.contentData.length >= 0) { // Изменено с > 0 на >= 0 для очистки
+        if (data.contentData && data.contentData.length >= 0) {
             documentContent = data.contentData;
             
             socket.broadcast.emit('textChange', {
