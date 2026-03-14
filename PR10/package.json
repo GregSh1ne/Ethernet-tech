@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dropbox": "^10.34.0",
+    "isomorphic-fetch": "^3.0.0"
+  }
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Real-Time User Service</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .stats-box { background: #eef2f7; padding: 15px; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #337ab7; }
+        .live-indicator { color: green; font-size: 0.8em; font-weight: bold; }
+    </style>
+</head>
+<body class="container">
+    <h2>Управление пользователями <span class="live-indicator">● LIVE</span></h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form name="userForm">
+                        <input type="hidden" name="id" value="0" />
+                        <div class="form-group">
+                            <label>Имя:</label>
+                            <input class="form-control" name="name" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Возраст:</label>
+                            <input class="form-control" name="age" type="number" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" id="reset" class="btn btn-default">Сбросить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stats-box" id="stats">Загрузка статистики...</div>
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="Живой поиск...">
+                <span class="input-group-btn">
+                    <button class="btn btn-info" onclick="SearchUsers()">Найти</button>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+        <thead><tr><th>ID</th><th>Имя</th><th>Возраст</th><th>Управление</th></tr></thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const API_KEY = "group-secret-key-2026";
+        const socket = io(); // Подключаемся к сокету
+
+        // СЛУШАЕМ ОБНОВЛЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ
+        socket.on("users_updated", function() {
+            console.log("Данные на сервере изменились, обновляю список...");
+            GetUsers();
+        });
+
+        function GetStats() {
+            $.get("/api/users/stats", data => {
+                $("#stats").html(`<b>Пользователей:</b> ${data.count} | <b>Ср. возраст:</b> ${data.averageAge}`);
+            });
+        }
+
+        function GetUsers() {
+            $.get("/api/users", users => {
+                let rows = "";
+                $.each(users, (i, user) => rows += row(user));
+                $("table tbody").html(rows);
+                GetStats();
+            });
+        }
+
+        function SearchUsers() {
+            const name = $("#searchInput").val();
+            $.get("/api/users/search?name=" + name, users => {
+                let rows = "";
+                $.each(users, (i, user) => rows += row(user));
+                $("table tbody").html(rows);
+            });
+        }
+
+        $("form").submit(function (e) {
+            e.preventDefault();
+            const id = this.elements["id"].value;
+            const name = this.elements["name"].value;
+            const age = this.elements["age"].value;
+            
+            const method = id == 0 ? "POST" : "PUT";
+            $.ajax({
+                url: "/api/users",
+                method: method,
+                contentType: "application/json",
+                headers: { "x-api-key": API_KEY },
+                data: JSON.stringify({ id, name, age }),
+                success: () => { reset(); }, // GetUsers вызовется сам через сокет!
+                error: (xhr) => alert("Ошибка доступа или лимит запросов")
+            });
+        });
+
+        function DeleteUser(id) {
+            $.ajax({
+                url: "/api/users/" + id,
+                method: "DELETE",
+                headers: { "x-api-key": API_KEY }
+            });
+        }
+
+        function EditUser(id) {
+            $.get("/api/users/" + id, user => {
+                const form = document.forms["userForm"];
+                form.elements["id"].value = user.id;
+                form.elements["name"].value = user.name;
+                form.elements["age"].value = user.age;
+            });
+        }
+
+        const row = (user) => `
+            <tr data-rowid="${user.id}">
+                <td>${user.id}</td><td>${user.name}</td><td>${user.age}</td>
+                <td>
+                    <button onclick="EditUser(${user.id})" class="btn btn-xs btn-warning">Edit</button>
+                    <button onclick="DeleteUser(${user.id})" class="btn btn-xs btn-danger">Del</button>
+                </td>
+            </tr>`;
+
+        function reset() {
+            document.forms["userForm"].reset();
+            document.forms["userForm"].elements["id"].value = 0;
+        }
+
+        $("#reset").click(() => reset());
+        
+        // Первый запуск
+        GetUsers();
+    </script>
+</body>
+</html>
