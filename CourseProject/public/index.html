@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieHub — Главная страница</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fs-3" href="index.html">MOVIEHUB</a>
+            
+            <div class="ms-lg-5 flex-grow-1 me-lg-5">
+                <form class="input-group" id="search-form">
+                    <input type="text" id="search-input" class="form-control" placeholder="Поиск фильма, сериала или актера...">
+                    <button class="btn btn-warning px-4" type="submit">
+                        <i class="bi bi-search"></i> Найти
+                    </button>
+                </form>
+            </div>
+
+            <div class="d-flex align-items-center">
+                <a href="profile.html" class="d-flex align-items-center text-decoration-none">
+                    <span id="nav-username" class="me-2 d-none d-sm-inline">Гость</span>
+                    <div id="nav-avatar" class="rounded-circle d-flex align-items-center justify-content-center fw-bold avatar-circle" style="width: 40px; height: 40px;">
+                        ?
+                    </div>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row g-4">
+            
+            <aside class="col-lg-3">
+                <div class="card p-4 shadow sticky-top" style="top: 90px;">
+                    <h5 class="mb-4"><i class="bi bi-filter-right text-warning"></i> Фильтры</h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">ЖАНРЫ</label>
+                        <select id="genre-filter" class="form-select">
+                            <option selected>Все жанры</option>
+                            </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">ГОД ВЫПУСКА</label>
+                        <div class="d-flex gap-2">
+                            <input type="number" id="year-from" class="form-control" placeholder="От">
+                            <input type="number" id="year-to" class="form-control" placeholder="До">
+                        </div>
+                    </div>
+
+                    <button id="apply-filters" class="btn btn-outline-warning w-100 mt-2 fw-bold">ПРИМЕНИТЬ</button>
+                </div>
+            </aside>
+
+            <main class="col-lg-9">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <h2 class="h4 mb-0 border-start border-4 ps-3 border-warning">Каталог фильмов</h2>
+                </div>
+
+                <div id="movie-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                    
+                    <div class="col d-flex align-items-center" id="lucky-block">
+                        <div class="text-center p-4 border border-2 rounded w-100" style="border-style: dashed !important; border-color: var(--text-muted) !important;">
+                            <i class="bi bi-shuffle fs-1 mb-3 text-warning"></i>
+                            <h6>Случайный выбор</h6>
+                            <button id="lucky-btn" class="btn btn-outline-warning btn-sm mt-2">МНЕ ПОВЕЗЕТ</button>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="js/index.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const login = localStorage.getItem('userLogin');
+            if (login) {
+                document.getElementById('nav-username').textContent = login;
+                document.getElementById('nav-avatar').textContent = login.charAt(0).toUpperCase();
+            }
+        });
+    </script>
+</body>
+</html>

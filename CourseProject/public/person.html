@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieHub — Персона</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fs-3" href="index.html">MOVIEHUB</a>
+            <div class="ms-auto d-flex align-items-center">
+                <a href="index.html" class="btn btn-outline-warning btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i> В каталог
+                </a>
+                <a href="profile.html" class="d-flex align-items-center text-decoration-none">
+                    <div id="nav-avatar" class="rounded-circle d-flex align-items-center justify-content-center fw-bold avatar-circle" style="width: 40px; height: 40px;">
+                        ?
+                    </div>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row g-5">
+            <div class="col-lg-4 text-center">
+                <div class="card p-2 shadow-lg mb-4">
+                    <img src="https://via.placeholder.com/400x500?text=Загрузка..." class="img-fluid rounded shadow-sm" alt="Фото персоны">
+                </div>
+                
+                <div class="card p-3 shadow-sm text-start">
+                    <h6 class="text-warning border-bottom border-warning pb-2 mb-3 uppercase small fw-bold">О ПЕРСОНЕ</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2"><span class="opacity-50">Карьера:</span> <span class="float-end">...</span></li>
+                        <li class="mb-2"><span class="opacity-50">Дата рождения:</span> <span class="float-end">...</span></li>
+                        <li class="mb-2"><span class="opacity-50">Место рождения:</span> <span class="float-end">...</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold text-warning mb-1">Загрузка...</h1>
+                <p class="fs-4 mb-4 opacity-75">...</p>
+
+                <h4 class="mb-3"><i class="bi bi-info-circle text-warning"></i> Биография</h4>
+                <div class="review-item mb-5 shadow-sm">
+                    <p class="lead mb-0">
+                        История жизни и творчества загружается из базы данных MovieHub...
+                    </p>
+                </div>
+
+                <h4 class="mb-4"><i class="bi bi-film text-warning"></i> Избранная фильмография</h4>
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="js/person.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const login = localStorage.getItem('userLogin');
+            if (login) {
+                const avatar = document.getElementById('nav-avatar');
+                if (avatar) avatar.textContent = login.charAt(0).toUpperCase();
+            }
+        });
+    </script>
+</body>
+</html>

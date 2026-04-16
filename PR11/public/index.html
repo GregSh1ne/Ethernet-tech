@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Real-Time User Service</title>
+    <title>User Service</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -28,6 +28,10 @@
                             <label>Возраст:</label>
                             <input class="form-control" name="age" type="number" required />
                         </div>
+                        <div>
+                            <label>Работа:</label>
+                            <input class="form-control" name="work" required />   
+                        </div>
                         <button type="submit" class="btn btn-primary">Сохранить</button>
                         <button type="button" id="reset" class="btn btn-default">Сбросить</button>
                     </form>
@@ -46,15 +50,14 @@
     </div>
 
     <table class="table table-hover">
-        <thead><tr><th>ID</th><th>Имя</th><th>Возраст</th><th>Управление</th></tr></thead>
+        <thead><tr><th>ID</th><th>Имя</th><th>Возраст</th><th>Работа</th><th>Управление</th></tr></thead>
         <tbody></tbody>
     </table>
 
     <script>
         const API_KEY = "group-secret-key-2026";
-        const socket = io(); // Подключаемся к сокету
+        const socket = io();
 
-        // СЛУШАЕМ ОБНОВЛЕНИЯ В РЕАЛЬНОМ ВРЕМЕНИ
         socket.on("users_updated", function() {
             console.log("Данные на сервере изменились, обновляю список...");
             GetUsers();
@@ -89,6 +92,7 @@
             const id = this.elements["id"].value;
             const name = this.elements["name"].value;
             const age = this.elements["age"].value;
+            const work = this.elements["work"].value;
             
             const method = id == 0 ? "POST" : "PUT";
             $.ajax({
@@ -96,8 +100,8 @@
                 method: method,
                 contentType: "application/json",
                 headers: { "x-api-key": API_KEY },
-                data: JSON.stringify({ id, name, age }),
-                success: () => { reset(); }, // GetUsers вызовется сам через сокет!
+                data: JSON.stringify({ id, name, age, work }),
+                success: () => { reset(); },
                 error: (xhr) => alert("Ошибка доступа или лимит запросов")
             });
         });
@@ -116,12 +120,13 @@
                 form.elements["id"].value = user.id;
                 form.elements["name"].value = user.name;
                 form.elements["age"].value = user.age;
+                form.elements["work"].value = user.work;
             });
         }
 
         const row = (user) => `
             <tr data-rowid="${user.id}">
-                <td>${user.id}</td><td>${user.name}</td><td>${user.age}</td>
+                <td>${user.id}</td><td>${user.name}</td><td>${user.age}</td><td>${user.work}</td>
                 <td>
                     <button onclick="EditUser(${user.id})" class="btn btn-xs btn-warning">Edit</button>
                     <button onclick="DeleteUser(${user.id})" class="btn btn-xs btn-danger">Del</button>
@@ -135,7 +140,6 @@
 
         $("#reset").click(() => reset());
         
-        // Первый запуск
         GetUsers();
     </script>
 </body>

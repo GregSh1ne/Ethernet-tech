@@ -1,0 +1,206 @@
+/* ============================================================
+   ФИНАЛЬНАЯ ПАЛИТРА ПРОЕКТА: MOVIEHUB (КУРСОВОЙ ПРОЕКТ №28)
+   Цвета: #2E3604, #4E5E07, #E19D29, #D8D2CF, #8D8179 + Black/White
+   ============================================================ */
+
+:root {
+    --bg-main: #2E3604;       /* Основной фон (темно-оливковый) */
+    --bg-card: #4E5E07;       /* Фон карточек и навигации (средне-оливковый) */
+    --accent-gold: #E19D29;   /* Акцентный цвет (золотой) */
+    --text-pure: #FFFFFF;     /* Чистый белый (заголовки, вводимый текст) */
+    --text-main: #D8D2CF;     /* Бежевый (основной текст) */
+    --text-muted: #8D8179;    /* Серо-коричневый (второстепенный текст, границы) */
+    --black: #000000;         /* Черный (инпуты и тени) */
+}
+
+/* 1. Общие настройки */
+body {
+    background-color: var(--bg-main) !important;
+    color: var(--text-main) !important;
+    font-family:Verdana, Geneva, Tahoma, sans-serif; /* Согласно стандарту ПЗ */
+    line-height: 1.6;
+}
+
+/* 2. Навигация (Navbar) */
+.navbar {
+    background-color: var(--black) !important;
+    border-bottom: 2px solid var(--accent-gold);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-brand {
+    color: var(--accent-gold) !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 3. Карточки и блоки */
+.card {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--text-muted) !important;
+    color: var(--text-pure) !important;
+}
+
+.movie-card:hover {
+    border-color: var(--accent-gold) !important;
+    transform: translateY(-5px);
+    transition: 0.3s;
+}
+
+/* 4. Поля ввода (Inputs) — ИСПРАВЛЕНИЕ ОБВОДКИ И ВИДИМОСТИ */
+.form-control, .form-select, textarea {
+    background-color: var(--black) !important; /* Черный фон для контраста */
+    color: var(--text-pure) !important;        /* ЯРКИЙ БЕЛЫЙ ТЕКСТ ПРИ ВВОДЕ */
+    border: 1px solid var(--text-muted) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* УДАЛЕНИЕ СИНЕЙ ОБВОДКИ BOOTSTRAP ПРИ КЛИКЕ */
+.form-control:focus, .form-select:focus, textarea:focus {
+    border-color: var(--accent-gold) !important; /* Только золотая граница */
+    outline: none !important;                    /* Убираем синий контур */
+    box-shadow: none !important;                 /* Убираем синее свечение */
+}
+
+/* 5. Кнопки (Buttons) — УДАЛЕНИЕ СИНЕГО И КРАСНОГО */
+.btn-warning {
+    background-color: var(--accent-gold) !important;
+    border: none !important;
+    color: var(--black) !important;
+    font-weight: bold;
+}
+
+.btn-warning:hover {
+    background-color: var(--text-pure) !important;
+    color: var(--black) !important;
+}
+
+.btn-outline-warning {
+    color: var(--accent-gold) !important;
+    border-color: var(--accent-gold) !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: var(--accent-gold) !important;
+    color: var(--black) !important;
+}
+
+/* Замена красных кнопок (btn-danger) на палитру проекта */
+.btn-outline-danger, .btn-danger {
+    color: var(--text-muted) !important;
+    border-color: var(--text-muted) !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-danger:hover, .btn-danger:hover {
+    background-color: var(--text-muted) !important;
+    color: var(--text-pure) !important;
+}
+
+/* Замена синих ссылок и кнопок-ссылок */
+a, .btn-link {
+    color: var(--accent-gold) !important;
+    text-decoration: none !important;
+}
+
+a:hover, .btn-link:hover {
+    color: var(--text-pure) !important;
+}
+
+/* 6. Таблицы (Admin Panel) */
+.table {
+    color: var(--text-main) !important;
+    border-color: var(--text-muted) !important;
+}
+
+.table thead th {
+    background-color: var(--black) !important;
+    color: var(--accent-gold) !important;
+    border-bottom: 2px solid var(--accent-gold) !important;
+}
+
+/* 7. Вспомогательные элементы */
+.badge.bg-warning {
+    background-color: var(--accent-gold) !important;
+    color: var(--black) !important;
+}
+
+.text-warning, .bi-star-fill {
+    color: var(--accent-gold) !important;
+}
+
+.avatar-circle {
+    border: 3px solid var(--accent-gold);
+    background-color: var(--accent-gold);
+    color: var(--black);
+}
+
+.review-item {
+    border-left: 4px solid var(--accent-gold);
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 4px;
+}
+
+hr {
+    border-color: var(--text-muted) !important;
+    opacity: 0.3;
+}
+
+/* ============================================================
+   ДОПОЛНЕНИЯ ДЛЯ ФИНАЛЬНОЙ СБОРКИ (JS + HTML)
+   ============================================================ */
+
+/* Фикс для изображений: чтобы карточки не «прыгали» по высоте */
+.movie-card img {
+    height: 400px;
+    object-fit: cover;
+    background-color: var(--black);
+}
+
+/* Стилизация блока "Случайный выбор" (заменяет инлайновые стили) */
+#lucky-block .text-center {
+    border: 2px dashed var(--text-muted) !important;
+    transition: 0.3s;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+#lucky-block .text-center:hover {
+    border-color: var(--accent-gold) !important;
+    background-color: rgba(225, 157, 41, 0.05);
+}
+
+/* Бейдж системного режима в админке */
+.badge.border-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    letter-spacing: 1px;
+    font-size: 0.7rem;
+}
+
+/* Красивый темный скроллбар под стиль проекта */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 2px solid var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-gold);
+}
+
+/* Плавный переход для всех интерактивных элементов */
+a, button, .card {
+    transition: all 0.25s ease-in-out !important;
+}

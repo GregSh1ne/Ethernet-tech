@@ -1,19 +1,18 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const http = require("http"); // Добавили для работы сокетов
-const { Server } = require("socket.io"); // Подключаем Socket.io
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
-const server = http.createServer(app); // Создаем сервер
-const io = new Server(server); // Инициализируем сокеты
+const server = http.createServer(app);
+const io = new Server(server);
 
 const FILE_PATH = path.join(__dirname, "users.json");
 
 app.use(express.json());
 app.use(express.static(__dirname + "/public"));
 
-// --- 1. ОГРАНИЧЕНИЕ ЗАПРОСОВ (Rate Limiting) ---
 const requestCounts = new Map();
 const RATE_LIMIT = 50; 
 const TIME_WINDOW = 60 * 1000;
@@ -32,21 +31,18 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 2. АВТОРИЗАЦИЯ ---
 const API_KEY = "group-secret-key-2026";
 const authHeader = (req, res, next) => {
     if (req.headers["x-api-key"] === API_KEY) return next();
     res.status(401).json({ error: "Unauthorized" });
 };
 
-// Вспомогательные функции
 const readData = () => JSON.parse(fs.readFileSync(FILE_PATH, "utf8") || "[]");
 const writeData = (data) => {
     fs.writeFileSync(FILE_PATH, JSON.stringify(data, null, 2));
-    io.emit("users_updated"); // КЛЮЧЕВОЙ МОМЕНТ: Сигнал всем клиентам об обновлении
+    io.emit("users_updated");
 };
 
-// --- API ФУНКЦИИ ---
 
 app.get("/api/users", (req, res) => res.send(readData()));
 
@@ -67,14 +63,15 @@ app.get("/api/users/:id", (req, res) => {
 });
 
 app.post("/api/users", authHeader, (req, res) => {
-    if (!req.body.name || !req.body.age) return res.status(400).send("Missing data");
+    if (!req.body.name || !req.body.age || !req.body.work) return res.status(400).send("Missing data");
     const users = readData();
     const maxId = users.length > 0 ? Math.max(...users.map(u => u.id)) : 0;
     
     const newUser = {
         id: maxId + 1,
         name: req.body.name, 
-        age: req.body.age
+        age: req.body.age,
+        work: req.body.work
     };
     
     users.push(newUser);
@@ -94,10 +91,9 @@ app.put("/api/users", authHeader, (req, res) => {
     const users = readData();
     const index = users.findIndex(u => u.id == req.body.id);
     if (index === -1) return res.status(404).send();
-    users[index] = { ...users[index], name: req.body.name, age: req.body.age };
+    users[index] = { ...users[index], name: req.body.name, age: req.body.age, work: req.body.work };
     writeData(users);
     res.send(users[index]);
 });
 
-// Слушаем через server, а не через app
-server.listen(3000, () => console.log("Сервер реального времени: http://localhost:3000"));
+server.listen(3000, () => console.log("Сервер: http://localhost:3000"));
