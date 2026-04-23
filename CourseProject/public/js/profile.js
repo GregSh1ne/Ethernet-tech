@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    const userRole = localStorage.getItem('userRole');
+    if (userRole === '1') {
+        const adminBtn = document.getElementById('admin-panel-btn');
+        if (adminBtn) {
+            adminBtn.classList.remove('d-none');
+        }
+    }
+
     loadUserProfile();
     loadUserReviews();
 
@@ -34,8 +42,10 @@ async function loadUserProfile() {
         document.querySelector('.avatar-circle').textContent = user.login.charAt(0).toUpperCase();
         
         // Обновление счетчиков (статистика)
-        const stats = document.querySelectorAll('.fw-bold');
-        stats[1].textContent = user.favorite_list.length; // Количество избранных персон
+        const favoritesCount = document.getElementById('favorites-count');
+        if (favoritesCount) {
+            favoritesCount.textContent = user.favorite_list.length;
+        }
 
         // Отрисовка списка избранного
         const favoritesList = document.querySelector('.list-group-flush');
@@ -72,10 +82,12 @@ async function loadUserReviews() {
         const res = await fetch(`/api/reviews/user/${userId}`);
         const reviews = await res.json();
 
-        const reviewsContainer = document.querySelector('.card-body .review-item').parentElement;
-        const reviewCountStat = document.querySelectorAll('.fw-bold')[0];
+        const reviewsContainer = document.querySelector('.review-list-container');
+        const reviewsCount = document.getElementById('reviews-count');
         
-        reviewCountStat.textContent = reviews.length; // Обновляем счетчик отзывов
+        if (reviewsCount) {
+            reviewsCount.textContent = reviews.length;
+        }
         reviewsContainer.innerHTML = ''; // Очищаем статику
 
         if (reviews.length === 0) {

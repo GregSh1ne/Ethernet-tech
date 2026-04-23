@@ -36,19 +36,20 @@
                     <img id="movie-poster" src="https://via.placeholder.com/400x600?text=Загрузка..." class="card-img-top" alt="Постер">
                     
                     <div class="card-body text-center p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="text-start">
                                 <span class="small d-block fw-bold opacity-75 uppercase">Рейтинг MovieHub</span>
-                                <span class="h2 fw-bold mb-0" id="movie-rating">0.0</span>
+                                <span class="h2 fw-bold mb-0 text-warning" id="movie-rating">0.0</span>
                             </div>
-                            <div class="text-end">
-                                <i class="bi bi-star-fill fs-3 text-warning"></i>
-                            </div>
+                            <i class="bi bi-star-fill fs-3 text-warning"></i>
                         </div>
-                        
-                        <button class="btn btn-warning w-100 fw-bold py-3 shadow">
-                            <i class="bi bi-heart-fill"></i> В ИЗБРАННОЕ
-                        </button>
+                        <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-3 border-secondary border-opacity-25">
+                            <div class="text-start">
+                                <span class="small d-block fw-bold opacity-50 uppercase text-white">Рейтинг IMDb</span>
+                                <span class="h4 fw-bold mb-0 opacity-75" id="imdb-rating">0.0</span>
+                            </div>
+                            <i class="bi bi-info-circle fs-5 opacity-50"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -61,10 +62,16 @@
                     <span class="badge rounded-pill bg-warning px-3 py-2 me-2 shadow-sm">Жанр</span>
                 </div>
 
-                <div class="p-4 rounded border-start border-4 border-warning shadow-sm mb-5">
+                <div class="p-4 rounded border-start border-4 border-warning shadow-sm mb-4">
                     <p id="movie-description" class="lead mb-0" style="font-style: italic;">
-                        Описание фильма загружается из базы данных...
+                        Описание фильма...
                     </p>
+                </div>
+
+                <div id="actors-section" class="mb-5">
+                    <h6 class="text-warning small fw-bold uppercase mb-3">В ГЛАВНЫХ РОЛЯХ</h6>
+                    <div id="movie-actors" class="d-flex flex-wrap gap-2">
+                        </div>
                 </div>
 
                 <h4 class="mb-4"><i class="bi bi-play-btn-fill text-warning"></i> Официальный трейлер</h4>
@@ -81,9 +88,26 @@
                 <div id="review-list" class="mb-4">
                     </div>
 
-                <div class="card p-4 shadow">
-                    <label class="form-label small fw-bold uppercase mb-2">Оставить отзыв</label>
-                    <textarea class="form-control mb-3" id="review-text" placeholder="Ваше мнение о фильме..." rows="3"></textarea>
+                <div class="card p-4 shadow bg-dark border-secondary">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label class="form-label small fw-bold uppercase mb-0">Оставить отзыв</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small opacity-75">Ваша оценка:</span>
+                            <select id="user-rating-select" class="form-select form-select-sm bg-warning text-dark fw-bold" style="width: 70px;">
+                                <option value="10">10</option>
+                                <option value="9">9</option>
+                                <option value="8">8</option>
+                                <option value="7">7</option>
+                                <option value="6">6</option>
+                                <option value="5">5</option>
+                                <option value="4">4</option>
+                                <option value="3">3</option>
+                                <option value="2">2</option>
+                                <option value="1">1</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea class="form-control mb-3 bg-dark text-white border-secondary" id="review-text" placeholder="Ваше мнение о фильме..." rows="3"></textarea>
                     <div class="d-flex justify-content-end">
                         <button id="send-review" class="btn btn-warning fw-bold px-5 py-2">ОТПРАВИТЬ</button>
                     </div>

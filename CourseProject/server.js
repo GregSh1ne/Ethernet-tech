@@ -16,7 +16,9 @@ app.use(express.json());
 app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
+const API_KEY = process.env.OMDB_API_KEY;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/movie_catalog';
+const TMDB_KEY = process.env.TMDB_API_KEY;
 
 mongoose.connect(MONGODB_URI)
     .then(() => console.log('>>> База данных MongoDB подключена успешно'))
@@ -32,6 +34,7 @@ const Schema_Movies = new mongoose.Schema({
   actors_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'People' }],
   genres: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Genres' }],
   rating: { type: Number, default: 0 },
+  imdb_rating: { type: Number, default: 0 },
   poster_link: String,
   trailer_link: String
 });
@@ -86,19 +89,43 @@ const Genres = mongoose.model('Genres', Schema_Genres);
 // Получение списка фильмов
 app.get('/api/movies', async (req, res) => {
     try {
-        const { genre, year } = req.query; 
+        const { genre, yearFrom, yearTo, search } = req.query; 
         let query = {};
-        if (genre) {
-            query.genres = genre; 
+
+        // Фильтр по жанру
+        if (genre && genre !== 'Все жанры') query.genres = genre; 
+
+        // Фильтр по диапазону лет
+        if (yearFrom || yearTo) {
+            query.year = {};
+            if (yearFrom) query.year.$gte = parseInt(yearFrom);
+            if (yearTo) query.year.$lte = parseInt(yearTo);
         }
-        if (year) {
-            query.year = year;
+
+        // Поиск по названию (регистронезависимый)
+        if (search) {
+            query.title = { $regex: search, $options: 'i' };
         }
+
         const movies = await Movies.find(query).populate('genres', 'name');
         res.status(200).json(movies);
     }
     catch (err) {
-        res.status(500).json({ message: "Ошибка при получении списка фильмов", error: err.message });
+        res.status(500).json({ message: "Ошибка поиска", error: err.message });
+    }
+});
+
+// "Мне повезет"
+app.get('/api/movies/random', async (req, res) =>{
+    try { 
+        const randomMovie = await Movies.aggregate([{ $sample: { size: 1 } }]);
+        if (randomMovie.length === 0) {
+            return res.status(404).json({ message: "В каталоге пока нет фильмов" });
+        }
+        res.status(200).json(randomMovie[0]);
+    } 
+    catch (err) {
+        res.status(500).json({ message: "Ошибка при выборе случайного фильма", error: err.message });
     }
 });
 
@@ -116,20 +143,6 @@ app.get('/api/movies/:id', async (req, res) => {
     } 
     catch (err) {
         res.status(400).json({ message: "Некорректный идентификатор фильма", error: err.message });
-    }
-});
-
-// "Мне повезет"
-app.get('/api/movies/random', async (req, res) =>{
-    try { 
-        const randomMovie = await Movies.aggregate([{ $sample: { size: 1 } }]);
-        if (randomMovie.length === 0) {
-            return res.status(404).json({ message: "В каталоге пока нет фильмов" });
-        }
-        res.status(200).json(randomMovie[0]);
-    } 
-    catch (err) {
-        res.status(500).json({ message: "Ошибка при выборе случайного фильма", error: err.message });
     }
 });
 
@@ -249,18 +262,36 @@ app.post('/api/reviews', async (req, res) => {
 
         await Movies.findByIdAndUpdate(movie_id, { rating: avgRating.toFixed(1) });
 
+        // Оставляем только ОДНО объявление переменной
         const populatedReview = await newReview.populate('author_id', 'login');
         
-        // Отправляем событие "new_review" всем подключенным клиентам
+        // Отправляем сам отзыв для "Живой ленты"
         io.emit('display_review', {
-            review: populatedReview,
-            movie_id: movie_id
+            movie_id: movie_id,
+            review: populatedReview
+        });
+
+        // Обновляем рейтинг MovieHub
+        io.emit('update_movie_rating', {
+            movie_id: movie_id,
+            new_rating: avgRating.toFixed(1)
         });
 
         res.status(201).json({ message: "Отзыв опубликован", review: populatedReview });
     }
     catch (err) {
         res.status(500).json({ message: "Ошибка при публикации отзыва", error: err.message });
+    }
+});
+
+app.get('/api/reviews/movie/:id', async (req, res) => {
+    try {
+        const reviews = await Reviews.find({ movie_id: req.params.id })
+            .populate('author_id', 'login')
+            .sort({ published: -1 });
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).json({ message: "Ошибка загрузки отзывов" });
     }
 });
 
@@ -356,7 +387,8 @@ app.get('/api/admin/stats', async (req, res) => {
 // Добавление фильма
 app.post('/api/admin/movies', async (req, res) => {
     try {
-        const { title, description, year, country, duration, director_id, actors_ids, genres, poster_link, trailer_link } = req.body;
+        // Добавили imdb_rating и rating в деструктуризацию
+        const { title, description, year, country, duration, director_id, actors_ids, genres, poster_link, trailer_link, imdb_rating, rating } = req.body;
 
         const newMovie = new Movies({
             title,
@@ -368,18 +400,46 @@ app.post('/api/admin/movies', async (req, res) => {
             actors_ids,
             genres,
             poster_link,
-            trailer_link
+            trailer_link,
+            imdb_rating: imdb_rating || 0, // ТЕПЕРЬ СОХРАНЯЕТСЯ
+            rating: rating || 0
         });
 
         await newMovie.save();
-
-        res.status(201).json({
-            message: "Новый фильм успешно добавлен в каталог",
-            movie: newMovie
-        });
+        res.status(201).json({ message: "Новый фильм успешно добавлен", movie: newMovie });
     } 
     catch (err) {
         res.status(400).json({ message: "Ошибка при добавлении фильма", error: err.message });
+    }
+});
+
+// Маршрут для получения данных из IMDb (через OMDb)
+app.get('/api/admin/fetch-imdb/:imdbId', async (req, res) => {
+    const { imdbId } = req.params;
+    const API_KEY = process.env.OMDB_API_KEY || 'ТВОЙ_КЛЮЧ';
+
+    try {
+        const response = await axios.get(`http://www.omdbapi.com/?i=${imdbId}&apikey=${API_KEY}`);
+        const data = response.data;
+
+        if (data.Response === "False") {
+            return res.status(404).json({ message: "Фильм не найден в IMDb" });
+        }
+
+        // Мапим (сопоставляем) данные OMDb под твою схему
+        const movieData = {
+            title: data.Title,
+            year: parseInt(data.Year),
+            rating: parseFloat(data.imdbRating),
+            description: data.Plot,
+            poster_link: data.Poster,
+            duration: parseInt(data.Runtime), // Например, "148 min" станет 148
+            trailer_link: "" // Трейлер придется искать отдельно (OMDb их не дает)
+        };
+
+        res.json(movieData);
+    } catch (err) {
+        res.status(500).json({ message: "Ошибка внешнего API" });
     }
 });
 
@@ -399,6 +459,87 @@ app.delete('/api/admin/movies/:id', async (req, res) => {
     } 
     catch (err) {
         res.status(500).json({ message: "Ошибка при удалении контента", error: err.message });
+    }
+});
+
+app.get('/api/admin/smart-import/:imdbId', async (req, res) => {
+    const { imdbId } = req.params;
+
+    try {
+        // 1. Находим внутренний ID фильма в TMDB по его IMDb ID
+        const findRes = await axios.get(`https://api.themoviedb.org/3/find/${imdbId}?api_key=${TMDB_KEY}&external_source=imdb_id&language=ru-RU`);
+        const movieBrief = findRes.data.movie_results[0];
+        if (!movieBrief) return res.status(404).json({ message: "Фильм не найден" });
+
+        const tmdbId = movieBrief.id;
+
+        // 2. Получаем полные данные о фильме и актерах (credits)
+        const movieRes = await axios.get(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_KEY}&append_to_response=credits&language=ru-RU`);
+        const data = movieRes.data;
+
+        // 3. ФУНКЦИЯ-ПОМОЩНИК: Импорт персоны
+        const importPerson = async (tmdbPersonId) => {
+            // Ищем в коллекции People по имени
+            const pRes = await axios.get(`https://api.themoviedb.org/3/person/${tmdbPersonId}?api_key=${TMDB_KEY}&language=ru-RU`);
+            const p = pRes.data;
+
+            let person = await People.findOne({ surname_name: p.name }); 
+            
+            if (person) return person._id;
+
+            const newPerson = await People.create({
+                surname_name: p.name,
+                roles: [p.known_for_department],
+                birth_date: p.birthday ? new Date(p.birthday) : null,
+                birth_place: p.place_of_birth,
+                biography: p.biography,
+                photo_link: `https://image.tmdb.org/t/p/w500${p.profile_path}`
+            });
+            return newPerson._id;
+        };
+
+        // 4. Обрабатываем режиссера и первых 5 актеров
+        const directorData = data.credits.crew.find(c => c.job === 'Director');
+        let directorId = directorData ? await importPerson(directorData.id) : null;
+
+        let actorIds = [];
+        const topActors = data.credits.cast.slice(0, 5); // Берем топ-5
+        for (const actor of topActors) {
+            const id = await importPerson(actor.id);
+            actorIds.push(id);
+        }
+
+        const countries = data.production_countries.map(c => c.name).join(', ');
+
+        // 5. Формируем объект фильма для фронтенда
+        const finalMovie = {
+            title: data.title,
+            year: new Date(data.release_date).getFullYear(),
+            rating: data.vote_average,
+            description: data.overview,
+            poster_link: `https://image.tmdb.org/t/p/w500${data.poster_path}`,
+            duration: data.runtime,
+            country: countries, // ТЕПЕРЬ СТРАНА ПЕРЕДАЕТСЯ
+            director_id: directorId,
+            actors_ids: actorIds, // ИЗМЕНЕНО: было actors
+            genres: data.genres.map(g => g.name)
+        };
+
+        res.json(finalMovie);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Ошибка при глубоком импорте" });
+    }
+});
+
+app.get('/api/people', async (req, res) => {
+    try {
+        // Находим всех людей и сортируем по имени для удобства
+        const people = await People.find().sort({ surname_name: 1 });
+        res.status(200).json(people);
+    } 
+    catch (err) {
+        res.status(500).json({ message: "Ошибка при получении списка людей", error: err.message });
     }
 });
 

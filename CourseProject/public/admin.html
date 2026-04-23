@@ -19,8 +19,8 @@
                 <span class="badge border border-danger text-danger me-3 px-3 py-2">
                     <i class="bi bi-shield-lock"></i> СИСТЕМНЫЙ РЕЖИМ
                 </span>
-                <a href="index.html" class="btn btn-outline-warning btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Выйти в каталог
+                <a href="profile.html" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-person-circle"></i> Назад в профиль
                 </a>
             </div>
         </div>
@@ -91,6 +91,90 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="addMovieModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-light border-warning">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-warning">ДОБАВЛЕНИЕ НОВОГО ФИЛЬМА</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-movie-form">
+                        <div class="row mb-4 pb-3 border-bottom border-secondary">
+                            <div class="col-md-9">
+                                <label class="form-label small fw-bold text-warning">IMDb ID (например: tt0111161)</label>
+                                <input type="text" id="imdb-id-input" class="form-control" placeholder="tt...">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" id="fetch-imdb-btn" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-download"></i> ПОДТЯНУТЬ
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label small fw-bold">НАЗВАНИЕ</label>
+                                <input type="text" name="title" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">ГОД</label>
+                                <input type="number" name="year" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">СТРАНА</label>
+                                <input type="text" name="country" class="form-control" placeholder="США, Франция..." required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">РЕЙТИНГ MOVIEHUB</label>
+                                <input type="number" step="0.1" name="rating" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">РЕЙТИНГ IMDb</label>
+                                <input type="number" step="0.1" name="imdb_rating" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">ДЛИТЕЛЬНОСТЬ (МИН)</label>
+                                <input type="number" name="duration" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">ЖАНРЫ (Удерживайте Ctrl для выбора нескольких)</label>
+                                <select name="genres" id="modal-genres" class="form-select" multiple required>
+                                    </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">РЕЖИССЕР</label>
+                                <select name="director_id" id="modal-directors" class="form-select" required>
+                                    <option value="">Выберите режиссера...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">АКТЕРЫ (Ctrl для выбора нескольких)</label>
+                                <select name="actors" id="modal-actors" class="form-select" multiple required>   
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">ССЫЛКА НА ПОСТЕР</label>
+                                <input type="url" name="poster_link" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">ССЫЛКА НА ТРЕЙЛЕР (YOUTUBE)</label>
+                                <input type="text" name="trailer_link" class="form-control" placeholder="Оставьте пустым для заглушки">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">ОПИСАНИЕ</label>
+                                <textarea name="description" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">ОТМЕНА</button>
+                    <button type="submit" form="add-movie-form" class="btn btn-warning fw-bold">СОХРАНИТЬ В БАЗУ</button>
+                </div>
+            </div>
+        </div>
+    </div>    
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     

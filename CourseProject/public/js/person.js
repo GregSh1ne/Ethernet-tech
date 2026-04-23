@@ -9,11 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadPersonDetails();
+
+    const favBtn = document.getElementById('add-to-fav-btn');
+    if (favBtn) {
+        favBtn.addEventListener('click', addToFavorites);
+    }
 });
 
-/**
- * Загрузка данных о персоне и её фильмографии
- */
+
+
 async function loadPersonDetails() {
     try {
         const res = await fetch(`/api/people/${personId}`);
@@ -65,5 +69,34 @@ async function loadPersonDetails() {
     } catch (err) {
         console.error("Ошибка загрузки данных персоны:", err);
         document.body.innerHTML = `<div class="container my-5 text-center"><h2>${err.message}</h2><a href="index.html" class="btn btn-warning mt-3">Назад в каталог</a></div>`;
+    }
+}
+
+async function addToFavorites() {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        alert("Пожалуйста, авторизуйтесь, чтобы добавлять в избранное.");
+        window.location.href = 'auth.html';
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/user/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: userId, 
+                personId: personId // Берем из параметров URL, определенных в начале файла
+            })
+        });
+
+        if (res.ok) {
+            alert("Персона добавлена в ваш список избранного!");
+        } else {
+            const error = await res.json();
+            alert("Ошибка: " + error.message);
+        }
+    } catch (err) {
+        console.error("Ошибка при добавлении в избранное:", err);
     }
 }

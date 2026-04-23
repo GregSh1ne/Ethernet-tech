@@ -37,15 +37,22 @@
                     
                     <div class="d-flex justify-content-center gap-3 mt-3">
                         <div class="text-center">
-                            <span class="d-block fw-bold">0</span> <small class="opacity-50">отзывов</small>
+                            <span id="reviews-count" class="d-block fw-bold">0</span> 
+                            <small class="opacity-50">отзывов</small>
                         </div>
                         <div class="text-center">
-                            <span class="d-block fw-bold">0</span> <small class="opacity-50">в избранном</small>
+                            <span id="favorites-count" class="d-block fw-bold">0</span> 
+                            <small class="opacity-50">в избранном</small>
                         </div>
                     </div>
-                    
-                    <hr class="my-4">
-                    <button class="btn btn-outline-danger btn-sm w-100">Выйти из системы</button>
+                </div>
+                <div>
+                    <div class="p-3">
+                        <a href="admin.html" id="admin-panel-btn" class="btn btn-warning btn-sm w-100 mb-2 d-none">
+                            <i class="bi bi-shield-lock"></i> ПАНЕЛЬ АДМИНИСТРАТОРА
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm w-100">Выйти из системы</button>
+                    </div>
                 </div>
             </div>
 

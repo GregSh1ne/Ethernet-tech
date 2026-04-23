@@ -1,79 +1,83 @@
-// Ждем полной загрузки DOM-дерева перед выполнением скриптов
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Первоначальная загрузка данных
     loadGenres();
-    loadMovies();
+    loadMovies(); // Начальная загрузка всех фильмов
 
-    // 2. Обработка фильтрации при нажатии на кнопку "ПРИМЕНИТЬ"
-    const applyFiltersBtn = document.querySelector('.btn-outline-warning');
-    applyFiltersBtn.addEventListener('click', () => {
-        const genreId = document.querySelector('.form-select').value;
-        const yearFrom = document.querySelectorAll('input[type="number"]')[0].value;
-        const yearTo = document.querySelectorAll('input[type="number"]')[1].value;
+    // 1. ЛОГИКА ПОИСКА (СВЕРХУ)
+    const searchForm = document.getElementById('search-form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const searchTerm = document.getElementById('search-input').value;
+            loadMovies({ search: searchTerm });
+        });
+    }
 
-        // Вызываем загрузку с учетом выбранного жанра
-        // (Для простоты в ПЗ используем фильтр по жанру, как в API)
-        loadMovies(genreId === 'Все жанры' ? '' : genreId);
-    });
+    // 2. ОБРАБОТКА ФИЛЬТРОВ (БОКОВАЯ ПАНЕЛЬ)
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', () => {
+            const params = {
+                genre: document.getElementById('genre-filter').value,
+                yearFrom: document.getElementById('year-from').value,
+                yearTo: document.getElementById('year-to').value
+            };
+            loadMovies(params);
+        });
+    }
 
-    // 3. Логика кнопки "МНЕ ПОВЕЗЕТ"
-    // Ищем кнопку внутри блока со значком перемешивания
-    const luckyBtn = document.querySelector('.bi-shuffle').closest('div').querySelector('button');
-    luckyBtn.addEventListener('click', async () => {
-        try {
-            const res = await fetch('/api/movies/random');
-            const movie = await res.json();
-            
-            if (movie && movie._id) {
-                // Перенаправляем на страницу фильма с передачей ID в URL
-                window.location.href = `movie.html?id=${movie._id}`;
+    // 3. ЛОГИКА КНОПКИ "МНЕ ПОВЕЗЕТ"
+    const luckyBtn = document.getElementById('lucky-btn');
+    if (luckyBtn) {
+        luckyBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/movies/random');
+                const movie = await res.json();
+                
+                if (movie && movie._id) {
+                    window.location.href = `movie.html?id=${movie._id}`;
+                } else {
+                    // Если база пуста или пришла ошибка
+                    alert("Похоже, в каталоге пока нет фильмов. Добавь их в админке!");
+                }
+            } catch (err) { 
+                console.error("Ошибка рандома:", err); 
             }
-        } catch (err) {
-            console.error("Ошибка при выборе случайного фильма:", err);
-        }
-    });
+        });
+    }
 });
 
-/**
- * Загрузка списка жанров из БД в выпадающий список
- */
 async function loadGenres() {
     try {
         const res = await fetch('/api/genres');
         const genres = await res.json();
-        const select = document.querySelector('.form-select');
-
+        const select = document.getElementById('genre-filter');
         genres.forEach(genre => {
-            const option = document.createElement('option');
-            option.value = genre._id; // Используем ObjectId из MongoDB
-            option.textContent = genre.name;
-            select.appendChild(option);
+            const option = new Option(genre.name, genre._id);
+            select.add(option);
         });
-    } catch (err) {
-        console.error("Не удалось загрузить жанры:", err);
-    }
+    } catch (err) { console.error("Ошибка жанров:", err); }
 }
 
-/**
- * Загрузка и отрисовка карточек фильмов
- */
-async function loadMovies(genreId = '') {
+async function loadMovies(filters = {}) {
     try {
-        const url = genreId ? `/api/movies?genre=${genreId}` : '/api/movies';
+        const queryParams = new URLSearchParams(filters).toString();
+        const url = queryParams ? `/api/movies?${queryParams}` : '/api/movies';
+        
         const res = await fetch(url);
         const movies = await res.json();
         
-        const grid = document.querySelector('.col-lg-9 .row');
+        const grid = document.getElementById('movie-grid');
         
-        // Находим и сохраняем блок "Случайный выбор", чтобы он не исчез
-        const randomChoiceBlock = grid.querySelector('.col.d-flex.align-items-center').outerHTML;
-        
-        // Очищаем сетку
+        // 1. Просто очищаем сетку. lucky-block не пострадает, так как он снаружи
         grid.innerHTML = '';
 
-        // Генерируем карточки для каждого фильма из базы
+        if (movies.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center py-5 opacity-50">Ничего не найдено по вашему запросу</div>';
+            return;
+        }
+
+        // 2. Отрисовываем только фильмы
         movies.forEach(movie => {
-            // Формируем строку с названиями жанров через запятую
             const genresList = movie.genres.map(g => g.name).join(', ');
 
             grid.innerHTML += `
@@ -82,21 +86,17 @@ async function loadMovies(genreId = '') {
                         <div class="position-relative">
                             <img src="${movie.poster_link}" class="card-img-top" alt="${movie.title}">
                             <div class="position-absolute top-0 end-0 m-2 badge bg-warning">
-                                <i class="bi bi-star-fill"></i> ${movie.rating}
+                                <i class="bi bi-star-fill"></i> ${movie.rating.toFixed(1)}
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title mb-1">${movie.title}</h6>
+                            <h6 class="card-title mb-1 text-truncate">${movie.title}</h6>
                             <p class="small mb-3 opacity-75">${movie.year} • ${genresList}</p>
-                            <a href="movie.html?id=${movie._id}" class="btn btn-warning btn-sm w-100">ПОДРОБНЕЕ</a>
+                            <a href="movie.html?id=${movie._id}" class="btn btn-warning btn-sm w-100 fw-bold">ПОДРОБНЕЕ</a>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
-
-        // Возвращаем блок "Случайный выбор" в конец списка
-        grid.innerHTML += randomChoiceBlock;
         
     } catch (err) {
         console.error("Ошибка при загрузке фильмов:", err);

@@ -18,7 +18,7 @@
             
             <div class="ms-lg-5 flex-grow-1 me-lg-5">
                 <form class="input-group" id="search-form">
-                    <input type="text" id="search-input" class="form-control" placeholder="Поиск фильма, сериала или актера...">
+                    <input type="text" id="search-input" class="form-control" placeholder="Поиск фильма или сериала...">
                     <button class="btn btn-warning px-4" type="submit">
                         <i class="bi bi-search"></i> Найти
                     </button>
@@ -68,15 +68,15 @@
                 </div>
 
                 <div id="movie-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                    
-                    <div class="col d-flex align-items-center" id="lucky-block">
-                        <div class="text-center p-4 border border-2 rounded w-100" style="border-style: dashed !important; border-color: var(--text-muted) !important;">
-                            <i class="bi bi-shuffle fs-1 mb-3 text-warning"></i>
-                            <h6>Случайный выбор</h6>
-                            <button id="lucky-btn" class="btn btn-outline-warning btn-sm mt-2">МНЕ ПОВЕЗЕТ</button>
-                        </div>
                     </div>
 
+                <div class="mt-4" id="lucky-block">
+                    <div class="text-center p-4 border border-2 rounded w-100" style="border-style: dashed !important; border-color: var(--text-muted) !important;">
+                        <i class="bi bi-shuffle fs-1 mb-3 text-warning"></i>
+                        <h6>Случайный выбор</h6>
+                        <p class="small opacity-50">Не знаете, что посмотреть? Доверьтесь случаю!</p>
+                        <button id="lucky-btn" class="btn btn-outline-warning btn-sm mt-2 fw-bold">МНЕ ПОВЕЗЕТ</button>
+                    </div>
                 </div>
             </main>
         </div>
