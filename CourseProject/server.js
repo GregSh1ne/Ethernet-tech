@@ -89,26 +89,48 @@ const Genres = mongoose.model('Genres', Schema_Genres);
 // Получение списка фильмов
 app.get('/api/movies', async (req, res) => {
     try {
-        const { genre, yearFrom, yearTo, search } = req.query; 
+        const { genre, yearFrom, yearTo, search, page = 1, limit = 24, ratingFrom, imdbRatingFrom } = req.query;
         let query = {};
 
-        // Фильтр по жанру
+        // Фильтрация по жанру
         if (genre && genre !== 'Все жанры') query.genres = genre; 
 
-        // Фильтр по диапазону лет
+        // Фильтрация по году
         if (yearFrom || yearTo) {
             query.year = {};
             if (yearFrom) query.year.$gte = parseInt(yearFrom);
             if (yearTo) query.year.$lte = parseInt(yearTo);
         }
 
-        // Поиск по названию (регистронезависимый)
+        // Поиск по названию
         if (search) {
             query.title = { $regex: search, $options: 'i' };
         }
 
-        const movies = await Movies.find(query).populate('genres', 'name');
-        res.status(200).json(movies);
+        if (ratingFrom) {
+            query.rating = { $gte: parseFloat(ratingFrom) };
+        }
+        if (imdbRatingFrom) {
+            query.imdb_rating = { $gte: parseFloat(imdbRatingFrom) };
+        }
+
+        // 1. Сначала вычисляем, сколько записей нужно пропустить
+        const skipValue = (parseInt(page) - 1) * parseInt(limit);
+
+        // 2. Выполняем запрос с использованием вычисленного skip
+        const movies = await Movies.find(query)
+            .populate('genres', 'name')
+            .skip(skipValue)   
+            .limit(parseInt(limit));
+
+        // 3. Считаем общее количество документов для пагинации на фронтенде
+        const total = await Movies.countDocuments(query);
+
+        res.status(200).json({
+            movies,
+            total,
+            pages: Math.ceil(total / limit)
+        });
     }
     catch (err) {
         res.status(500).json({ message: "Ошибка поиска", error: err.message });
@@ -459,6 +481,20 @@ app.delete('/api/admin/movies/:id', async (req, res) => {
     } 
     catch (err) {
         res.status(500).json({ message: "Ошибка при удалении контента", error: err.message });
+    }
+});
+
+app.put('/api/admin/movies/:id', async (req, res) => {
+    try {
+        const updatedMovie = await Movies.findByIdAndUpdate(
+            req.params.id, 
+            req.body, 
+            { new: true }
+        );
+        if (!updatedMovie) return res.status(404).json({ message: "Фильм не найден" });
+        res.json({ message: "Данные успешно обновлены", movie: updatedMovie });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 

@@ -57,7 +57,15 @@
                             <input type="number" id="year-to" class="form-control" placeholder="До">
                         </div>
                     </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold uppercase opacity-75">Рейтинг MovieHub (от)</label>
+                        <input type="number" step="0.1" id="rating-from" class="form-control" placeholder="0.0" min="0" max="10">
+                    </div>
 
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold uppercase opacity-75">Рейтинг IMDb (от)</label>
+                        <input type="number" step="0.1" id="imdb-rating-from" class="form-control" placeholder="0.0" min="0" max="10">
+                    </div>
                     <button id="apply-filters" class="btn btn-outline-warning w-100 mt-2 fw-bold">ПРИМЕНИТЬ</button>
                 </div>
             </aside>
@@ -67,8 +75,13 @@
                     <h2 class="h4 mb-0 border-start border-4 ps-3 border-warning">Каталог фильмов</h2>
                 </div>
 
-                <div id="movie-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
-                    </div>
+                <div id="movie-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4"></div>
+
+                <div class="text-center mt-5 mb-5" id="load-more-container">
+                    <button id="load-more-btn" class="btn btn-warning px-5 fw-bold shadow-sm">
+                        ПОКАЗАТЬ ЕЩЁ
+                    </button>
+                </div>
 
                 <div class="mt-4" id="lucky-block">
                     <div class="text-center p-4 border border-2 rounded w-100" style="border-style: dashed !important; border-color: var(--text-muted) !important;">

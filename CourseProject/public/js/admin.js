@@ -1,3 +1,6 @@
+let adminCurrentPage = 1;
+let adminSearchTerm = '';
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Проверка прав доступа
     const userRole = localStorage.getItem('userRole');
@@ -12,6 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMoviesTable();
     loadGenresToModal();
     loadPeopleToModal();
+
+    const adminSearchInput = document.getElementById('admin-search-input');
+    if (adminSearchInput) {
+        adminSearchInput.addEventListener('input', (e) => {
+            adminSearchTerm = e.target.value.trim();
+            adminCurrentPage = 1; // Сброс на первую страницу при поиске
+            loadMoviesTable(false); // false = очистить таблицу и начать заново
+        });
+    }
+
+    const loadMoreBtn = document.getElementById('admin-load-more');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', () => {
+            adminCurrentPage++;
+            loadMoviesTable(true); // true = добавить в конец текущего списка
+        });
+    }
 
     // Элементы DOM
     const addMovieModal = new bootstrap.Modal(document.getElementById('addMovieModal'));
@@ -161,32 +181,134 @@ async function loadStats() {
     } catch (err) { console.error("Ошибка статистики:", err); }
 }
 
-async function loadMoviesTable() {
+/**
+ * Исправленная загрузка таблицы фильмов
+ * @param {Boolean} append - Если true, данные добавляются в конец, если false - таблица очищается
+ */
+
+async function loadMoviesTable(append = false) {
     try {
-        const res = await fetch('/api/movies');
-        const movies = await res.json();
+
+        const params = new URLSearchParams({
+            page: adminCurrentPage,
+            limit: 20, // Грузим по 20 штук для таблицы
+            search: adminSearchTerm
+        }).toString();
+
+        const res = await fetch(`/api/movies?${params}`);
+        const data = await res.json();
+        
+        const movies = data.movies; // ИСПРАВЛЕНО: берем массив из объекта
+        
         const tbody = document.querySelector('tbody');
         if (!tbody) return;
 
-        tbody.innerHTML = ''; 
-        movies.forEach(movie => {
-            tbody.innerHTML += `
-                <tr>
-                    <td class="ps-4 opacity-50 small">#${movie._id.slice(-6)}</td>
-                    <td class="fw-bold">${movie.title}</td>
-                    <td>${movie.year}</td>
-                    <td><i class="bi bi-star-fill text-warning"></i> ${movie.rating}</td>
-                    <td class="text-end pe-4">
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteMovie('${movie._id}')">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
-        });
+        if (!append) tbody.innerHTML = ''; 
+
+        if (data.movies.length === 0 && !append) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 opacity-50">Фильмы не найдены</td></tr>';
+        } else {
+            data.movies.forEach(movie => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-4 opacity-50 small">#${movie._id.slice(-6)}</td>
+                        <td class="fw-bold">${movie.title}</td>
+                        <td>${movie.year}</td>
+                        <td><i class="bi bi-star-fill text-warning"></i> ${movie.rating}</td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-outline-warning me-2" onclick="editMovie('${movie._id}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteMovie('${movie._id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        }
+        
+        const loadMoreBtn = document.getElementById('admin-load-more');
+        if (loadMoreBtn) {
+            if (adminCurrentPage >= data.pages || data.movies.length === 0) {
+                loadMoreBtn.classList.add('d-none');
+            } else {
+                loadMoreBtn.classList.remove('d-none');
+            }
+        }
+
         const footerSpan = document.querySelector('.card-footer span');
-        if (footerSpan) footerSpan.textContent = `Показано ${movies.length} записей`;
-    } catch (err) { console.error("Ошибка таблицы фильмов:", err); }
+        if (footerSpan) footerSpan.textContent = `Показано ${tbody.children.length} из ${data.total} записей`;
+
+    } 
+    catch (err) { 
+        console.error("Ошибка таблицы фильмов:", err); 
+    }
 }
+
+window.editMovie = async function(id) {
+    try {
+        const res = await fetch(`/api/movies/${id}`);
+        const movie = await res.json();
+        
+        const form = document.getElementById('add-movie-form');
+        const modalTitle = document.querySelector('.modal-title');
+        const submitBtn = form.closest('.modal-content').querySelector('button[type="submit"]');
+
+        // Заполняем поля
+        document.getElementById('edit-movie-id').value = movie._id;
+        form.querySelector('[name="title"]').value = movie.title;
+        form.querySelector('[name="year"]').value = movie.year;
+        form.querySelector('[name="country"]').value = movie.country || '';
+        form.querySelector('[name="rating"]').value = movie.rating;
+        form.querySelector('[name="imdb_rating"]').value = movie.imdb_rating || 0;
+        form.querySelector('[name="duration"]').value = movie.duration;
+        form.querySelector('[name="poster_link"]').value = movie.poster_link;
+        form.querySelector('[name="trailer_link"]').value = movie.trailer_link;
+        form.querySelector('[name="description"]').value = movie.description;
+
+        modalTitle.textContent = "РЕДАКТИРОВАНИЕ ФИЛЬМА";
+        submitBtn.textContent = "ОБНОВИТЬ ДАННЫЕ";
+
+        new bootstrap.Modal(document.getElementById('addMovieModal')).show();
+    } catch (err) { alert("Ошибка при загрузке данных фильма"); }
+}
+
+document.getElementById('add-movie-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const movieId = document.getElementById('edit-movie-id').value;
+    
+    const movieData = {
+        title: formData.get('title'),
+        year: Number(formData.get('year')),
+        rating: Number(formData.get('rating')),
+        imdb_rating: Number(formData.get('imdb_rating')),
+        duration: Number(formData.get('duration')),
+        description: formData.get('description'),
+        poster_link: formData.get('poster_link'),
+        trailer_link: formData.get('trailer_link') || "Трейлер будет позже",
+        genres: Array.from(formData.getAll('genres')),
+        director_id: formData.get('director_id'),
+        actors_ids: Array.from(formData.getAll('actors'))
+    };
+
+    const url = movieId ? `/api/admin/movies/${movieId}` : '/api/admin/movies';
+    const method = movieId ? 'PUT' : 'POST';
+
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(movieData)
+        });
+
+        if (res.ok) {
+            alert(movieId ? 'Данные обновлены!' : 'Фильм добавлен!');
+            location.reload();
+        }
+    } catch (err) { console.error(err); }
+});
 
 async function loadGenresToModal() {
     try {

@@ -1,6 +1,13 @@
+let currentPage = 1;
+let currentFilters = {};
 document.addEventListener('DOMContentLoaded', () => {
     loadGenres();
     loadMovies(); // Начальная загрузка всех фильмов
+
+    document.getElementById('load-more-btn').addEventListener('click', () => {
+        currentPage++;
+        loadMovies(currentFilters, true); // true означает "добавить к списку"
+    });
 
     // 1. ЛОГИКА ПОИСКА (СВЕРХУ)
     const searchForm = document.getElementById('search-form');
@@ -12,18 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+
     // 2. ОБРАБОТКА ФИЛЬТРОВ (БОКОВАЯ ПАНЕЛЬ)
-    const applyFiltersBtn = document.getElementById('apply-filters');
-    if (applyFiltersBtn) {
-        applyFiltersBtn.addEventListener('click', () => {
-            const params = {
-                genre: document.getElementById('genre-filter').value,
-                yearFrom: document.getElementById('year-from').value,
-                yearTo: document.getElementById('year-to').value
-            };
-            loadMovies(params);
-        });
-    }
+    document.getElementById('apply-filters').addEventListener('click', () => {
+        currentPage = 1;
+        currentFilters = {
+            genre: document.getElementById('genre-filter').value,
+            yearFrom: document.getElementById('year-from').value,
+            yearTo: document.getElementById('year-to').value,
+            ratingFrom: document.getElementById('rating-from').value,
+            imdbRatingFrom: document.getElementById('imdb-rating-from').value
+        };
+        loadMovies(currentFilters, false); 
+    });
 
     // 3. ЛОГИКА КНОПКИ "МНЕ ПОВЕЗЕТ"
     const luckyBtn = document.getElementById('lucky-btn');
@@ -58,47 +67,87 @@ async function loadGenres() {
     } catch (err) { console.error("Ошибка жанров:", err); }
 }
 
-async function loadMovies(filters = {}) {
-    try {
-        const queryParams = new URLSearchParams(filters).toString();
-        const url = queryParams ? `/api/movies?${queryParams}` : '/api/movies';
-        
-        const res = await fetch(url);
-        const movies = await res.json();
-        
-        const grid = document.getElementById('movie-grid');
-        
-        // 1. Просто очищаем сетку. lucky-block не пострадает, так как он снаружи
-        grid.innerHTML = '';
+/**
+ * Загрузка и отрисовка карточек фильмов с поддержкой пагинации
+ * @param {Object} filters - Объект с фильтрами (genre, yearFrom, yearTo, search)
+ * @param {Boolean} append - Если true, новые фильмы добавятся в конец, иначе сетка очистится
+ */
 
-        if (movies.length === 0) {
-            grid.innerHTML = '<div class="col-12 text-center py-5 opacity-50">Ничего не найдено по вашему запросу</div>';
+async function loadMovies(filters = {}, append = false) {
+    try {
+        const grid = document.getElementById('movie-grid');
+        const loadMoreContainer = document.getElementById('load-more-container');
+        
+        // Формируем параметры запроса, включая текущую страницу и лимит
+        const params = new URLSearchParams({
+            ...filters,
+            page: currentPage, // Глобальная переменная текущей страницы
+            limit: 24          // Количество фильмов на одну подгрузку
+        }).toString();
+
+        const res = await fetch(`/api/movies?${params}`);
+        if (!res.ok) throw new Error('Ошибка при загрузке данных с сервера');
+        
+        const data = await res.json(); // Получаем { movies, total, pages }
+
+        // 1. Очищаем сетку, если это новый поиск/фильтр, а не "Показать ещё"
+        if (!append) {
+            grid.innerHTML = '';
+        }
+
+        // 2. Обработка пустого результата
+        if (data.movies.length === 0 && !append) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-search fs-1 opacity-25 d-block mb-3"></i>
+                    <p class="opacity-50">Ничего не найдено по вашему запросу</p>
+                </div>`;
+            if (loadMoreContainer) loadMoreContainer.classList.add('d-none');
             return;
         }
 
-        // 2. Отрисовываем только фильмы
-        movies.forEach(movie => {
+        // 3. Отрисовка карточек
+        data.movies.forEach(movie => {
             const genresList = movie.genres.map(g => g.name).join(', ');
+            const rating = movie.rating ? movie.rating.toFixed(1) : '0.0';
+            // Подготовка рейтинга IMDb для карточки
+            const imdbRating = movie.imdb_rating ? movie.imdb_rating.toFixed(1) : '—';
 
             grid.innerHTML += `
                 <div class="col">
                     <div class="card h-100 movie-card shadow">
                         <div class="position-relative">
-                            <img src="${movie.poster_link}" class="card-img-top" alt="${movie.title}">
-                            <div class="position-absolute top-0 end-0 m-2 badge bg-warning">
-                                <i class="bi bi-star-fill"></i> ${movie.rating.toFixed(1)}
+                            <img src="${movie.poster_link}" class="card-img-top" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/400x600?text=Нет+постера'">
+                            
+                            <div class="position-absolute top-0 end-0 m-2 badge bg-warning text-dark fw-bold">
+                                <i class="bi bi-star-fill"></i> ${rating}
+                            </div>
+                            
+                            <div class="position-absolute top-0 start-0 m-2 badge bg-dark border border-warning text-warning fw-bold" style="opacity: 0.9;">
+                                IMDb: ${imdbRating}
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title mb-1 text-truncate">${movie.title}</h6>
+                            <h6 class="card-title mb-1 text-truncate" title="${movie.title}">${movie.title}</h6>
                             <p class="small mb-3 opacity-75">${movie.year} • ${genresList}</p>
                             <a href="movie.html?id=${movie._id}" class="btn btn-warning btn-sm w-100 fw-bold">ПОДРОБНЕЕ</a>
                         </div>
                     </div>
                 </div>`;
         });
+
+        // 4. Управление видимостью кнопки "Показать ещё"
+        if (loadMoreContainer) {
+            if (currentPage >= data.pages) {
+                loadMoreContainer.classList.add('d-none'); // Прячем, если страницы кончились
+            } else {
+                loadMoreContainer.classList.remove('d-none'); // Показываем, если есть что грузить
+            }
+        }
         
     } catch (err) {
-        console.error("Ошибка при загрузке фильмов:", err);
+        console.error("Ошибка в loadMovies:", err);
+        const grid = document.getElementById('movie-grid');
+        if (grid) grid.innerHTML = `<p class="text-danger text-center w-100">Ошибка соединения с сервером</p>`;
     }
 }
