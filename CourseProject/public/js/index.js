@@ -117,13 +117,13 @@ async function loadMovies(filters = {}, append = false) {
                 <div class="col">
                     <div class="card h-100 movie-card shadow">
                         <div class="position-relative">
-                            <img src="${movie.poster_link}" class="card-img-top" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/400x600?text=Нет+постера'">
+                            <img src="${movie.poster_link}" class="card-img-top" alt="${movie.title}">
                             
                             <div class="position-absolute top-0 end-0 m-2 badge bg-warning text-dark fw-bold">
                                 <i class="bi bi-star-fill"></i> ${rating}
                             </div>
                             
-                            <div class="position-absolute top-0 start-0 m-2 badge bg-dark border border-warning text-warning fw-bold" style="opacity: 0.9;">
+                            <div class="position-absolute top-0 start-0 m-2 badge bg-dark border border-warning text-warning fw-bold">
                                 IMDb: ${imdbRating}
                             </div>
                         </div>

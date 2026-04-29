@@ -130,7 +130,7 @@ a:hover, .btn-link:hover {
 }
 
 .text-warning, .bi-star-fill {
-    color: var(--accent-gold) !important;
+    color: var(--accent-gold);
 }
 
 .avatar-circle {
@@ -203,4 +203,28 @@ hr {
 /* Плавный переход для всех интерактивных элементов */
 a, button, .card {
     transition: all 0.25s ease-in-out !important;
+}
+
+/* Делаем рейтинг более заметным */
+.bi-star-fill.text-warning {
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5)); /* Темная тень для контраста */
+    transition: 0.3s ease;
+}
+
+/* Эффект при наведении на блок рейтинга */
+.card-body:hover .bi-star-fill.text-warning {
+    filter: drop-shadow(0 0 8px rgba(225, 157, 41, 0.8)); /* Золотое свечение */
+    transform: scale(1.1);
+}
+
+.badge .bi-star-fill {
+    color: inherit !important; /* Берет цвет текста баджа (черный) */
+    margin-right: 4px;        /* Немного отступа от цифр */
+}
+
+/* 3. Улучшаем видимость на странице фильма */
+#movie-rating + .bi-star-fill, 
+.card-body .bi-star-fill {
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); /* Тень для объема */
+    font-size: 1.2em;
 }
