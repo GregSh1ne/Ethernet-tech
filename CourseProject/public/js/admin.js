@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMoviesTable();
     loadGenresToModal();
     loadPeopleToModal();
+    loadReviewsModeration();
 
     const adminSearchInput = document.getElementById('admin-search-input');
     if (adminSearchInput) {
@@ -356,4 +357,40 @@ async function deleteMovie(id) {
             alert('Не удалось удалить фильм');
         }
     } catch (err) { console.error("Ошибка удаления:", err); }
+}
+
+async function loadReviewsModeration() {
+    try {
+        const res = await fetch('/api/admin/reviews');
+        const reviews = await res.json();
+        
+        const tbody = document.querySelector('#reviews-moderation-table tbody');
+        tbody.innerHTML = '';
+
+        reviews.forEach(rev => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="ps-4"><strong>${rev.author_id.login}</strong></td>
+                    <td class="small">${rev.movie_id ? rev.movie_id.title : '---'}</td>
+                    <td class="small opacity-75">${rev.review_text.substring(0, 50)}...</td>
+                    <td class="small">${new Date(rev.published).toLocaleDateString()}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteReview('${rev._id}')">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </td>
+                </tr>`;
+        });
+    } catch (err) { console.error(err); }
+}
+
+window.deleteReview = async function(id) {
+    if (!confirm('Удалить этот отзыв?')) return;
+    try {
+        const res = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            alert('Отзыв удален');
+            loadReviewsModeration(); // Обновляем список
+        }
+    } catch (err) { console.error(err); }
 }

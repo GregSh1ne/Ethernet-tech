@@ -1,9 +1,7 @@
-// 1. Инициализация: проверяем, авторизован ли пользователь
 const userId = localStorage.getItem('userId');
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!userId) {
-        // Если ID пользователя нет в браузере, отправляем его на страницу входа
         window.location.href = 'auth.html';
         return;
     }
@@ -18,18 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadUserProfile();
     loadUserReviews();
+    checkNotifications();
 
-    // Обработка кнопки выхода
     const logoutBtn = document.querySelector('.btn-outline-danger');
     logoutBtn.addEventListener('click', () => {
-        localStorage.clear(); // Полная очистка данных сессии
+        localStorage.clear();
         window.location.href = 'index.html';
     });
 });
 
-/**
- * Загрузка метаданных профиля и списка избранного
- */
 async function loadUserProfile() {
     try {
         const res = await fetch(`/api/user/profile/${userId}`);
@@ -37,19 +32,16 @@ async function loadUserProfile() {
         
         const user = await res.json();
 
-        // Обновление интерфейса данными из базы
         document.querySelector('h3').textContent = user.login;
         document.querySelector('.avatar-circle').textContent = user.login.charAt(0).toUpperCase();
         
-        // Обновление счетчиков (статистика)
         const favoritesCount = document.getElementById('favorites-count');
         if (favoritesCount) {
             favoritesCount.textContent = user.favorite_list.length;
         }
 
-        // Отрисовка списка избранного
         const favoritesList = document.querySelector('.list-group-flush');
-        favoritesList.innerHTML = ''; // Очищаем статику
+        favoritesList.innerHTML = '';
 
         if (user.favorite_list.length === 0) {
             favoritesList.innerHTML = '<div class="p-3 opacity-50 text-center">Ваш список избранного пока пуст</div>';
@@ -74,9 +66,6 @@ async function loadUserProfile() {
     }
 }
 
-/**
- * Загрузка истории отзывов пользователя
- */
 async function loadUserReviews() {
     try {
         const res = await fetch(`/api/reviews/user/${userId}`);
@@ -88,7 +77,7 @@ async function loadUserReviews() {
         if (reviewsCount) {
             reviewsCount.textContent = reviews.length;
         }
-        reviewsContainer.innerHTML = ''; // Очищаем статику
+        reviewsContainer.innerHTML = '';
 
         if (reviews.length === 0) {
             reviewsContainer.innerHTML = '<p class="opacity-50 text-center">Вы еще не оставили ни одного отзыва.</p>';
@@ -112,12 +101,75 @@ async function loadUserReviews() {
     }
 }
 
-/**
- * Заглушка для удаления из избранного (логика для будущей реализации)
- */
 async function removeFromFavorites(personId) {
-    if(confirm('Удалить эту персону из избранного?')) {
-        // Здесь будет вызов API на удаление, если решишь его добавить
-        alert('Функция удаления будет доступна в следующей версии');
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    if (confirm('Удалить эту персону из избранного?')) {
+        try {
+            const res = await fetch('/api/user/favorites', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, personId })
+            });
+
+            if (res.ok) {
+                await loadUserProfile(); 
+            } else {
+                const error = await res.json();
+                alert("Ошибка: " + error.message);
+            }
+        } catch (err) {
+            console.error("Ошибка при удалении из избранного:", err);
+            alert("Не удалось связаться с сервером");
+        }
     }
+}
+
+async function checkNotifications() {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    const wrapper = document.getElementById('notif-wrapper');
+    if (wrapper) wrapper.style.display = 'block';
+
+    try {
+        const res = await fetch(`/api/notifications/${userId}`);
+        const notifications = await res.json();
+        
+        const badge = document.getElementById('notif-badge');
+        const list = document.getElementById('notif-list');
+
+        if (notifications.length > 0) {
+            badge.textContent = notifications.length;
+            badge.classList.remove('d-none');
+
+            list.innerHTML = notifications.map(n => `
+                <div class="list-group-item bg-transparent text-white border-secondary py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 text-warning small fw-bold">НОВИНКА</h6>
+                        <small class="opacity-50">${new Date(n.created_at).toLocaleDateString()}</small>
+                    </div>
+                    <p class="mb-1 small">${n.message_text}</p>
+                </div>
+            `).join('');
+        } else {
+            badge.classList.add('d-none');
+            list.innerHTML = '<p class="text-center py-4 opacity-50 mb-0">У вас нет новых уведомлений</p>';
+        }
+    } catch (err) { console.error(err); }
+}
+
+const markReadBtn = document.getElementById('mark-read-btn');
+if (markReadBtn) {
+    markReadBtn.addEventListener('click', async () => {
+        const userId = localStorage.getItem('userId');
+        try {
+            const res = await fetch(`/api/notifications/read-all/${userId}`, { method: 'PUT' });
+            if (res.ok) {
+                checkNotifications();
+                bootstrap.Modal.getInstance(document.getElementById('notifModal')).hide();
+            }
+        } catch (err) { console.error(err); }
+    });
 }

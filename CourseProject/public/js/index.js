@@ -3,6 +3,7 @@ let currentFilters = {};
 document.addEventListener('DOMContentLoaded', () => {
     loadGenres();
     loadMovies(); // Начальная загрузка всех фильмов
+    checkNotifications();
 
     document.getElementById('load-more-btn').addEventListener('click', () => {
         currentPage++;
@@ -150,4 +151,51 @@ async function loadMovies(filters = {}, append = false) {
         const grid = document.getElementById('movie-grid');
         if (grid) grid.innerHTML = `<p class="text-danger text-center w-100">Ошибка соединения с сервером</p>`;
     }
+}
+
+async function checkNotifications() {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    const wrapper = document.getElementById('notif-wrapper');
+    if (wrapper) wrapper.style.display = 'block';
+
+    try {
+        const res = await fetch(`/api/notifications/${userId}`);
+        const notifications = await res.json();
+        
+        const badge = document.getElementById('notif-badge');
+        const list = document.getElementById('notif-list');
+
+        if (notifications.length > 0) {
+            badge.textContent = notifications.length;
+            badge.classList.remove('d-none');
+
+            list.innerHTML = notifications.map(n => `
+                <div class="list-group-item bg-transparent text-white border-secondary py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 text-warning small fw-bold">НОВИНКА</h6>
+                        <small class="opacity-50">${new Date(n.created_at).toLocaleDateString()}</small>
+                    </div>
+                    <p class="mb-1 small">${n.message_text}</p>
+                </div>
+            `).join('');
+        } else {
+            badge.classList.add('d-none');
+            list.innerHTML = '<p class="text-center py-4 opacity-50 mb-0">У вас нет новых уведомлений</p>';
+        }
+    } catch (err) { console.error(err); }
+}
+const markReadBtn = document.getElementById('mark-read-btn');
+if (markReadBtn) {
+    markReadBtn.addEventListener('click', async () => {
+        const userId = localStorage.getItem('userId');
+        try {
+            const res = await fetch(`/api/notifications/read-all/${userId}`, { method: 'PUT' });
+            if (res.ok) {
+                checkNotifications(); 
+                bootstrap.Modal.getInstance(document.getElementById('notifModal')).hide();
+            }
+        } catch (err) { console.error(err); }
+    });
 }

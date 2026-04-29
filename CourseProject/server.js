@@ -356,6 +356,29 @@ app.post('/api/user/favorites', async (req, res) => {
     }
 });
 
+app.delete('/api/user/favorites', async (req, res) => {
+    try {
+        const { userId, personId } = req.body;
+
+        const updatedUser = await Users.findByIdAndUpdate(
+            userId,
+            { $pull: { favorite_list: personId } }, // $pull удаляет ID из массива
+            { new: true }
+        ).populate('favorite_list');
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "Пользователь не найден" });
+        }
+
+        res.status(200).json({
+            message: "Удалено из избранного",
+            favorites: updatedUser.favorite_list
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Ошибка при удалении", error: err.message });
+    }
+});
+
 // Список жанров
 app.get('/api/genres', async (req, res) => {
     try {
@@ -576,6 +599,74 @@ app.get('/api/people', async (req, res) => {
     } 
     catch (err) {
         res.status(500).json({ message: "Ошибка при получении списка людей", error: err.message });
+    }
+});
+
+app.post('/api/admin/movies', async (req, res) => {
+    try {
+        const { title, director_id, actors_ids, ...rest } = req.body;
+
+        const newMovie = new Movies({ title, director_id, actors_ids, ...rest });
+        await newMovie.save();
+
+        // ЛОГИКА УВЕДОМЛЕНИЙ: ищем пользователей, у которых режиссер или актеры в избранном
+        const participants = [director_id, ...actors_ids].filter(id => id); // Убираем null
+        
+        const usersToNotify = await Users.find({
+            favorite_list: { $in: participants }
+        });
+
+        if (usersToNotify.length > 0) {
+            const notifications = usersToNotify.map(user => ({
+                receiver_id: user._id,
+                message_text: `Вышел новый фильм "${title}" с вашим любимым участником!`,
+                message_type: 'new_movie'
+            }));
+            await Notification.insertMany(notifications); // Массовое создание в БД
+        }
+
+        res.status(201).json({ message: "Фильм добавлен, уведомления созданы", movie: newMovie });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Получение ВСЕХ отзывов для модерации
+app.get('/api/admin/reviews', async (req, res) => {
+    try {
+        const reviews = await Reviews.find()
+            .populate('movie_id', 'title')
+            .populate('author_id', 'login')
+            .sort({ published: -1 });
+        res.json(reviews);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Удаление отзыва (Модерация)
+app.delete('/api/admin/reviews/:id', async (req, res) => {
+    try {
+        const review = await Reviews.findByIdAndDelete(req.params.id);
+        if (!review) return res.status(404).json({ message: "Отзыв не найден" });
+        
+        // Пересчитываем рейтинг фильма после удаления отзыва
+        const remainingReviews = await Reviews.find({ movie_id: review.movie_id });
+        let newAvg = 0;
+        if (remainingReviews.length > 0) {
+            newAvg = remainingReviews.reduce((acc, r) => acc + r.user_rating, 0) / remainingReviews.length;
+        }
+        await Movies.findByIdAndUpdate(review.movie_id, { rating: newAvg.toFixed(1) });
+
+        res.json({ message: "Отзыв удален" });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/notifications/read-all/:userId', async (req, res) => {
+    try {
+        await Notification.updateMany(
+            { receiver_id: req.params.userId, status: false },
+            { $set: { status: true } }
+        );
+        res.json({ message: "Уведомления прочитаны" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
